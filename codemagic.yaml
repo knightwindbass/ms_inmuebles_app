@@ -1,7 +1,7 @@
 workflows:
   ios-build:
     name: iOS Build (MS Inmuebles)
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
       flutter: stable
@@ -10,10 +10,7 @@ workflows:
     scripts:
       - name: Instalar dependencias de Flutter
         script: |
-          flutter packages pub get
-      - name: Instalar Pods de iOS
-        script: |
-          find . -name "Podfile" -execdir pod install \;
+          flutter pub get
       - name: Compilar versión iOS
         script: |
           flutter build ios --release --no-codesign
