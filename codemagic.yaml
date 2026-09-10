@@ -6,6 +6,9 @@ workflows:
     integrations:
       app_store_connect: Codemagic
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.metasociedad.inmuebles
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -13,18 +16,7 @@ workflows:
       - name: Instalar dependencias de Flutter
         script: |
           flutter pub get
-      - name: Inicializar llavero de firmas
-        script: |
-          keychain initialize
-      - name: Obtener o crear certificados y perfiles en Apple automáticamente
-        script: |
-          app-store-connect fetch-signing-files "com.metasociedad.inmuebles" \
-            --type IOS_APP_STORE \
-            --create
-      - name: Añadir certificados al llavero
-        script: |
-          keychain add-certificates
-      - name: Aplicar perfiles al proyecto Xcode
+      - name: Configurar firma de código automática
         script: |
           xcode-project use-profiles
       - name: Compilar paquete IPA firmado
