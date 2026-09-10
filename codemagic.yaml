@@ -1,9 +1,14 @@
 workflows:
-  ios-build:
-    name: iOS Build (MS Inmuebles)
+  ios-release:
+    name: iOS Release (TestFlight)
     instance_type: mac_mini_m2
     max_build_duration: 30
+    integrations:
+      app_store_connect: Codemagic
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.metasociedad.inmuebles
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -11,10 +16,17 @@ workflows:
       - name: Instalar dependencias de Flutter
         script: |
           flutter pub get
-      - name: Compilar versión iOS
+      - name: Configurar firma y perfiles de Apple automáticamente
         script: |
-          flutter build ios --release --no-codesign
+          xcode-project use-profiles
+      - name: Compilar paquete IPA firmado
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
-      - build/ios/iphoneos/Runner.app
-      - build/ios/archive/*.xcarchive
-      - '**/build/ios/ipa/*.ipa'
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
