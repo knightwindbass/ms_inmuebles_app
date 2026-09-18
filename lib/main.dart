@@ -75,7 +75,7 @@ class MSInmueblesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MS Inmuebles SaaS',
+      title: 'Eslive',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

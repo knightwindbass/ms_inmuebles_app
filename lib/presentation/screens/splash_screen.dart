@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'MS Inmuebles',
+              'Eslive',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,

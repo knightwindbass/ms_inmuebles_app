@@ -144,7 +144,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             const SizedBox(width: 10),
             const Text(
-              'MS Inmuebles',
+              'Eslive',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
           ],
