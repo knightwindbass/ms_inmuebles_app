@@ -20,3 +20,6 @@
 # Mobile Scanner Flutter Plugin
 -keep class dev.steenbakker.mobile_scanner.** { *; }
 -dontwarn dev.steenbakker.mobile_scanner.**
+
+# Suppress warnings for Play Core split / deferred components
+-dontwarn com.google.android.play.core.**
