@@ -13,10 +13,12 @@ import 'logic/contratos_provider.dart';
 import 'logic/dashboard_provider.dart';
 import 'logic/inmuebles_provider.dart';
 import 'logic/inquilinos_provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'presentation/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es', null);
 
   // Inicializar almacenamiento de sesión
   final sessionStorage = await SessionStorage.init();

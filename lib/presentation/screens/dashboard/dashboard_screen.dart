@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dashboard_provider.dart';
@@ -25,13 +24,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getFormattedDate() {
-    try {
-      final now = DateTime.now();
-      final dateFormatted = DateFormat("EEEE, d 'de' MMMM 'de' yyyy", 'es').format(now);
-      return dateFormatted[0].toUpperCase() + dateFormatted.substring(1);
-    } catch (_) {
-      return 'Jueves, 18 de septiembre de 2026';
-    }
+    final now = DateTime.now();
+    const dias = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo',
+    ];
+    const meses = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+
+    final diaSemana = dias[now.weekday - 1];
+    final mes = meses[now.month - 1];
+    return '$diaSemana, ${now.day} de $mes de ${now.year}';
   }
 
   @override
@@ -351,86 +371,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-
-            // Acciones: Campana con badge + Avatar 'RS'
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.notifications_none_rounded,
-                        size: 20,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 10),
-
-                // Avatar Usuario 'RS'
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'RS',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 16,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
 
-        // Fecha Dinámica a la derecha
+        // Fecha Actual Dinámica y Real (para capturas de pantalla)
         Align(
           alignment: Alignment.centerRight,
-          child: Text(
-            _getFormattedDate(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 12,
+                color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                _getFormattedDate(),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
         ),
       ],
