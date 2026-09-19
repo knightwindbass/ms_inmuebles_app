@@ -7,6 +7,7 @@ import 'data/repositories/contratos_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
 import 'data/repositories/inmuebles_repository.dart';
 import 'data/repositories/inquilinos_repository.dart';
+import 'data/repositories/tenant_repository.dart';
 import 'logic/auth_provider.dart';
 import 'logic/contratos_provider.dart';
 import 'logic/dashboard_provider.dart';
@@ -40,6 +41,9 @@ void main() async {
         ),
         ProxyProvider<AuthProvider, InquilinosRepository>(
           update: (_, auth, __) => InquilinosRepository(auth.apiClient),
+        ),
+        ProxyProvider<AuthProvider, TenantRepository>(
+          update: (_, auth, __) => TenantRepository(auth.apiClient),
         ),
 
         // Proveedores de Estado de la Aplicación

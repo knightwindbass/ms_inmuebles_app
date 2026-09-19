@@ -7,6 +7,7 @@ class ApiConstants {
   static const String inmuebles = '/inmuebles';
   static const String inquilinos = '/inquilinos';
   static const String contratos = '/contratos';
+  static const String tenantPerfil = '/tenant/perfil';
 
   // Headers Multi-Tenant
   static const String headerApiKey = 'x-api-key';

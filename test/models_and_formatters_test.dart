@@ -3,6 +3,7 @@ import 'package:ms_inmuebles_app/core/utils/formatters.dart';
 import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
 import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
 import 'package:ms_inmuebles_app/data/models/inquilino_model.dart';
+import 'package:ms_inmuebles_app/data/models/tenant_perfil_model.dart';
 import 'package:ms_inmuebles_app/presentation/screens/setup/qr_scanner_screen.dart';
 
 void main() {
@@ -111,6 +112,41 @@ void main() {
       expect(credentials!.apiUrl, equals('https://api.metasociedad.com/wp-json/msinm/v1/'));
       expect(credentials.apiKey, equals('VBamcjz4FfHBxxAFq2HqNYWBTu2piIoNBZDoHfXY'));
       expect(credentials.tenantId, equals('MS-001'));
+    });
+
+    test('TenantPerfilModel parsea correctamente la respuesta de branding (/tenant/perfil)', () {
+      final jsonSample = {
+        "tenant_id": "ESLIVE_SA",
+        "identificador": "Empresa Eslive Inmobiliaria",
+        "app_banner": "https://conector-cliente.com/wp-content/uploads/2026/10/banner-hero.jpg"
+      };
+
+      final perfil = TenantPerfilModel.fromJson(jsonSample);
+
+      expect(perfil.tenantId, equals('ESLIVE_SA'));
+      expect(perfil.identificador, equals('Empresa Eslive Inmobiliaria'));
+      expect(perfil.appBanner, equals('https://conector-cliente.com/wp-content/uploads/2026/10/banner-hero.jpg'));
+    });
+
+    test('InquilinoModel parsea logo corporativo del cliente', () {
+      final jsonClient = {
+        "id": "5",
+        "tenant_id": "EMPRESA_SA",
+        "identificacion": "0999999999",
+        "nombres_razon_social": "Rosenheimer S.A.",
+        "email": "contacto@rosenheimer.com",
+        "telefono": "0987654321",
+        "direccion": "Av. Principal 123",
+        "logo": "https://tu-servidor.com/wp-content/uploads/2026/09/logo-rosenheimer.png",
+        "contratos_vigentes": "2"
+      };
+
+      final inq = InquilinoModel.fromJson(jsonClient);
+
+      expect(inq.id, equals(5));
+      expect(inq.nombresRazonSocial, equals('Rosenheimer S.A.'));
+      expect(inq.logo, equals('https://tu-servidor.com/wp-content/uploads/2026/09/logo-rosenheimer.png'));
+      expect(inq.isActivo, isTrue);
     });
   });
 }

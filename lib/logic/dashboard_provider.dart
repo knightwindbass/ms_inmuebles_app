@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/models/dashboard_kpi_model.dart';
 import '../data/models/inmueble_model.dart';
+import '../data/models/tenant_perfil_model.dart';
 import '../data/repositories/dashboard_repository.dart';
 import '../data/repositories/inmuebles_repository.dart';
 
@@ -10,6 +11,7 @@ class DashboardProvider extends ChangeNotifier {
   final InmueblesRepository? _inmueblesRepository;
 
   DashboardKpiModel? _kpis;
+  TenantPerfilModel? _tenantPerfil;
   bool _isLoading = false;
   String? _errorMessage;
   int? _selectedPadreId;
@@ -17,9 +19,14 @@ class DashboardProvider extends ChangeNotifier {
   DashboardProvider(this._repository, [this._inmueblesRepository]);
 
   DashboardKpiModel? get kpis => _kpis;
+  TenantPerfilModel? get tenantPerfil => _tenantPerfil;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int? get selectedPadreId => _selectedPadreId;
+
+  String? get bannerUrl => _tenantPerfil?.appBanner ?? _kpis?.bannerUrl;
+  String? get logoUrl => _tenantPerfil?.logo ?? _kpis?.logoUrl;
+  String? get slogan => _tenantPerfil?.slogan ?? _kpis?.slogan;
 
   Future<void> fetchDashboard({int? padreId}) async {
     _selectedPadreId = padreId;
@@ -28,14 +35,32 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Obtener la respuesta directa del endpoint del Dashboard
+      // 1. Obtener la respuesta directa del endpoint del Dashboard (/dashboard/resumen)
       final kpisResult = await _repository.getResumen(padreId: _selectedPadreId);
 
-      _kpis = kpisResult;
+      // 2. Obtener opcionalmente personalización de branding del Tenant (/tenant/perfil)
+      try {
+        final perfilResult = await _repository.getTenantPerfil();
+        if (perfilResult != null) {
+          _tenantPerfil = perfilResult;
+        }
+      } catch (_) {}
+
+      // Si tenemos branding de tenant, enriquecer los KPIs con banner/logo/slogan
+      if (_tenantPerfil != null) {
+        _kpis = kpisResult.copyWith(
+          bannerUrl: _tenantPerfil!.appBanner ?? kpisResult.bannerUrl,
+          logoUrl: _tenantPerfil!.logo ?? kpisResult.logoUrl,
+          slogan: _tenantPerfil!.slogan ?? kpisResult.slogan,
+        );
+      } else {
+        _kpis = kpisResult;
+      }
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      // 2. Fallback de contingencia si el endpoint falla: calcular desde /inmuebles
+      // 3. Fallback de contingencia si el endpoint falla: calcular desde /inmuebles
       if (_inmueblesRepository != null) {
         try {
           final inmueblesList = await _inmueblesRepository!.getInmuebles(padreId: _selectedPadreId);
@@ -76,21 +101,30 @@ class DashboardProvider extends ChangeNotifier {
       final isMant = item.isMantenimiento;
       final isInac = item.isInactivo;
 
-      if (isDispon) disp++;
-      else if (isRent) {
+      if (isDispon) {
+        disp++;
+      } else if (isRent) {
         rent++;
         mrr += item.valorRentaBase;
+      } else if (isMant) {
+        mant++;
+      } else if (isInac) {
+        inac++;
       }
-      else if (isMant) mant++;
-      else if (isInac) inac++;
 
       // Jerarquía
       if (item.isSubunidad) {
-        if (isInac) sInac++;
-        else sAct++;
+        if (isInac) {
+          sInac++;
+        } else {
+          sAct++;
+        }
       } else {
-        if (isInac) pInac++;
-        else pAct++;
+        if (isInac) {
+          pInac++;
+        } else {
+          pAct++;
+        }
       }
 
       // Distribución

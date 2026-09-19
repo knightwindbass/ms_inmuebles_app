@@ -7,6 +7,7 @@ class InquilinoModel {
   final String? email;
   final String? telefono;
   final String? direccion;
+  final String? logo;
   final int contratosVigentes;
 
   InquilinoModel({
@@ -17,6 +18,7 @@ class InquilinoModel {
     this.email,
     this.telefono,
     this.direccion,
+    this.logo,
     this.contratosVigentes = 0,
   });
 
@@ -26,6 +28,7 @@ class InquilinoModel {
     final rawEmail = json['email']?.toString();
     final rawTel = json['telefono']?.toString();
     final rawDir = json['direccion']?.toString();
+    final rawLogo = json['logo']?.toString() ?? json['logo_url']?.toString();
 
     return InquilinoModel(
       id: _toInt(json['id']),
@@ -35,6 +38,7 @@ class InquilinoModel {
       email: (rawEmail != null && rawEmail.trim().isNotEmpty) ? rawEmail.trim() : null,
       telefono: (rawTel != null && rawTel.trim().isNotEmpty) ? rawTel.trim() : null,
       direccion: (rawDir != null && rawDir.trim().isNotEmpty) ? rawDir.trim() : null,
+      logo: (rawLogo != null && rawLogo.trim().isNotEmpty) ? rawLogo.trim() : null,
       contratosVigentes: _toInt(json['contratos_vigentes'] ?? json['contratos_activos'] ?? json['vigentes']),
     );
   }
@@ -47,6 +51,7 @@ class InquilinoModel {
       if (email != null) 'email': email,
       if (telefono != null) 'telefono': telefono,
       if (direccion != null) 'direccion': direccion,
+      if (logo != null) 'logo': logo,
       'contratos_vigentes': contratosVigentes,
     };
   }

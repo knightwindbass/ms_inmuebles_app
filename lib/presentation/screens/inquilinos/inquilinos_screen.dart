@@ -88,29 +88,51 @@ class _InquilinosScreenState extends State<InquilinosScreen> {
                 ),
                 const SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        inq.nombresRazonSocial,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    if (inq.logo != null && inq.logo!.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          child: Image.network(
+                            inq.logo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.business_rounded, color: Color(0xFF2563EB)),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            inq.nombresRazonSocial,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Identificación: ${inq.identificacion}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     _buildActiveStatusBadge(inq),
                   ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Identificación: ${inq.identificacion}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  ),
                 ),
                 const Divider(height: 24),
                 if (inq.telefono != null && inq.telefono!.isNotEmpty)
@@ -305,19 +327,46 @@ class _InquilinosScreenState extends State<InquilinosScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar con iniciales
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: item.isActivo
-                    ? const Color(0xFF10B981).withOpacity(0.12)
-                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                child: Text(
-                  initials.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: item.isActivo ? const Color(0xFF10B981) : (isDark ? Colors.white : const Color(0xFF475569)),
-                  ),
+              // Avatar con logo corporativo o iniciales
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  color: item.isActivo
+                      ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  child: (item.logo != null && item.logo!.isNotEmpty)
+                      ? Image.network(
+                          item.logo!,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Text(
+                              initials.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: item.isActivo
+                                    ? const Color(0xFF10B981)
+                                    : (isDark ? Colors.white : const Color(0xFF475569)),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            initials.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: item.isActivo
+                                  ? const Color(0xFF10B981)
+                                  : (isDark ? Colors.white : const Color(0xFF475569)),
+                            ),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),

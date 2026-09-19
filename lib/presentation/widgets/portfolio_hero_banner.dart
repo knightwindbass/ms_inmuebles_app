@@ -23,9 +23,18 @@ class PortfolioHeroBanner extends StatelessWidget {
       height: 155,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0F172A), // Fondo degradado corporativo por defecto
+            Color(0xFF1E293B),
+            Color(0xFF0B1329),
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -36,32 +45,50 @@ class PortfolioHeroBanner extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Imagen de Fondo (Red o Asset Local)
+            // Imagen de Fondo (Red o Asset Local con fallback)
             if (networkImageUrl != null && networkImageUrl!.isNotEmpty)
               Image.network(
                 networkImageUrl!,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: const Color(0xFF0F172A),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (_, __, ___) => Image.asset(
                   defaultAssetImage,
                   fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               )
             else
               Image.asset(
                 defaultAssetImage,
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
 
-            // Capa de Gradiente Oscuro para Legibilidad Superior
+            // Capa de Gradiente Oscuro para Legibilidad Superior del Texto
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Colors.black.withOpacity(0.78),
-                    Colors.black.withOpacity(0.55),
-                    Colors.black.withOpacity(0.25),
+                    Colors.black.withValues(alpha: 0.82),
+                    Colors.black.withValues(alpha: 0.58),
+                    Colors.black.withValues(alpha: 0.28),
                   ],
                 ),
               ),
@@ -92,7 +119,7 @@ class PortfolioHeroBanner extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       shadows: const [
                         Shadow(color: Colors.black45, blurRadius: 3, offset: Offset(0, 1)),
                       ],

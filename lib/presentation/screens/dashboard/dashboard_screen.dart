@@ -97,13 +97,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
         // 1. ENCABEZADO EJECUTIVO (Logo Eslive, Slogan, Fecha, Notificación, Avatar)
-        _buildHeader(kpis, isDark),
+        _buildHeader(kpis, isDark, logoUrl: provider.logoUrl, slogan: provider.slogan),
 
         const SizedBox(height: 14),
 
-        // 2. BANNER HERO: "Portafolio en movimiento"
+        // 2. BANNER HERO: "Portafolio en movimiento" (Personalizado dinámicamente)
         PortfolioHeroBanner(
-          networkImageUrl: kpis.bannerUrl,
+          networkImageUrl: provider.bannerUrl ?? kpis.bannerUrl,
         ),
 
         const SizedBox(height: 18),
@@ -290,7 +290,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader(dynamic kpis, bool isDark) {
+  Widget _buildHeader(dynamic kpis, bool isDark, {String? logoUrl, String? slogan}) {
+    final effectiveLogoUrl = (logoUrl != null && logoUrl.isNotEmpty) ? logoUrl : kpis.logoUrl;
+    final effectiveSlogan = (slogan != null && slogan.isNotEmpty) ? slogan : kpis.displaySlogan;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -298,30 +301,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Logo Horizontal Eslive + Slogan
+            // Logo Horizontal Eslive (o Logo del Tenant) + Slogan
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset(
-                    isDark
-                        ? 'assets/images/eslive_logo_horizontal_white.png'
-                        : 'assets/images/eslive_logo_horizontal.png',
-                    height: 28,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.centerLeft,
-                    errorBuilder: (_, __, ___) => Text(
-                      'Eslive',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  if (effectiveLogoUrl != null && effectiveLogoUrl.isNotEmpty)
+                    Image.network(
+                      effectiveLogoUrl,
+                      height: 28,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        isDark
+                            ? 'assets/images/eslive_logo_horizontal_white.png'
+                            : 'assets/images/eslive_logo_horizontal.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.centerLeft,
+                      ),
+                    )
+                  else
+                    Image.asset(
+                      isDark
+                          ? 'assets/images/eslive_logo_horizontal_white.png'
+                          : 'assets/images/eslive_logo_horizontal.png',
+                      height: 28,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
+                      errorBuilder: (_, __, ___) => Text(
+                        'Eslive',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 3),
                   Text(
-                    kpis.displaySlogan,
+                    effectiveSlogan,
                     style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
