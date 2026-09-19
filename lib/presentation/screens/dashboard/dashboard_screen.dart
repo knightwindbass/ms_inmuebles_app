@@ -404,6 +404,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSmartKpiCards(dynamic kpis, bool isDark) {
+    final double areaTotal = kpis.displayAreaTotal;
+    final double areaVacante = kpis.displayAreaVacante;
+    final double pctVacante = areaTotal > 0 ? (areaVacante / areaTotal) * 100 : 0.0;
+    final double upside = (kpis.displayRentaPotencial - kpis.displayRentaMensual);
+    final String upsideSubtitle = upside > 0
+        ? '+${AppFormatters.currencyNoDecimals(upside)} al 100% de ocupación'
+        : 'Portafolio al 100% de ocupación';
+
     return Column(
       children: [
         // Fila 1: Renta mensual (base) & Ocupación (m²)
@@ -416,7 +424,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: 'Renta mensual (base)',
                   value: AppFormatters.currencyNoDecimals(kpis.displayRentaMensual),
                   trendBadge: kpis.displayTendenciaRentaMensual,
-                  trendContext: 'vs. mes anterior',
+                  trendContext: kpis.displayTendenciaRentaMensual != null ? 'vs. mes anterior' : null,
+                  subtitle: kpis.displayTendenciaRentaMensual == null ? 'Facturación mensual contractual' : null,
                   icon: Icons.attach_money_rounded,
                   iconBgColor: const Color(0xFF10B981),
                   iconColor: Colors.white,
@@ -427,7 +436,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: SmartKpiCard(
                   title: 'Ocupación (m²)',
                   value: '${kpis.displayTasaOcupacion.toStringAsFixed(1)}%',
-                  subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² ocupados de ${AppFormatters.number(kpis.displayAreaTotal.toInt())} m²',
+                  subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² rentados de ${AppFormatters.number(areaTotal.toInt())} m²',
                   isSubtitleHighlighted: true,
                   icon: Icons.trending_up_rounded,
                   iconBgColor: const Color(0xFF2563EB),
@@ -451,7 +460,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   value: '\$${kpis.displayRentaPromedioM2.toStringAsFixed(2)}',
                   valueSuffix: '/ m² / mes',
                   trendBadge: kpis.displayTendenciaRentaPromedio,
-                  trendContext: 'vs. año anterior',
+                  trendContext: kpis.displayTendenciaRentaPromedio != null ? 'vs. período anterior' : null,
+                  subtitle: kpis.displayTendenciaRentaPromedio == null ? 'Por m² rentado' : null,
                   icon: Icons.monetization_on_rounded,
                   iconBgColor: const Color(0xFF8B5CF6),
                   iconColor: Colors.white,
@@ -461,7 +471,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: SmartKpiCard(
                   title: 'Área total rentable',
-                  value: '${AppFormatters.number(kpis.displayAreaTotal.toInt())} m²',
+                  value: '${AppFormatters.number(areaTotal.toInt())} m²',
                   subtitle: 'Portafolio consolidado',
                   icon: Icons.crop_free_rounded,
                   iconBgColor: Colors.transparent,
@@ -483,8 +493,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: SmartKpiCard(
                   title: 'Área vacante',
-                  value: '${AppFormatters.number(kpis.displayAreaVacante.toInt())} m²',
-                  subtitle: '${((kpis.displayAreaVacante / (kpis.displayAreaTotal > 0 ? kpis.displayAreaTotal : 1)) * 100).toStringAsFixed(1)}% del total',
+                  value: '${AppFormatters.number(areaVacante.toInt())} m²',
+                  subtitle: '${pctVacante.toStringAsFixed(1)}% del total disponible',
                   icon: Icons.inventory_2_outlined,
                   iconBgColor: const Color(0xFF475569),
                   iconColor: Colors.white,
@@ -497,7 +507,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   value: AppFormatters.currencyNoDecimals(kpis.displayRentaPotencial),
                   valueSuffix: '/ mes',
                   trendBadge: kpis.displayTendenciaRentaPotencial,
-                  trendContext: 'vs. actual',
+                  trendContext: kpis.displayTendenciaRentaPotencial != null ? 'vs. actual' : null,
+                  subtitle: kpis.displayTendenciaRentaPotencial == null ? upsideSubtitle : null,
                   icon: Icons.bar_chart_rounded,
                   iconBgColor: const Color(0xFF334155),
                   iconColor: Colors.white,

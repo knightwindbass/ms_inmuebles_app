@@ -36,7 +36,7 @@ class DashboardProvider extends ChangeNotifier {
 
     try {
       // 1. Obtener la respuesta directa del endpoint del Dashboard (/dashboard/resumen)
-      final kpisResult = await _repository.getResumen(padreId: _selectedPadreId);
+      DashboardKpiModel kpisResult = await _repository.getResumen(padreId: _selectedPadreId);
 
       // 2. Obtener opcionalmente personalización de branding del Tenant (/tenant/perfil)
       try {
@@ -45,6 +45,14 @@ class DashboardProvider extends ChangeNotifier {
           _tenantPerfil = perfilResult;
         }
       } catch (_) {}
+
+      // 3. Enriquecer con métricas de metraje real desde /inmuebles
+      if (_inmueblesRepository != null) {
+        try {
+          final inmueblesList = await _inmueblesRepository!.getInmuebles(padreId: _selectedPadreId);
+          kpisResult = _enrichKpisWithInmuebles(kpisResult, inmueblesList);
+        } catch (_) {}
+      }
 
       // Si tenemos branding de tenant, enriquecer los KPIs con banner/logo/slogan
       if (_tenantPerfil != null) {
@@ -60,7 +68,7 @@ class DashboardProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      // 3. Fallback de contingencia si el endpoint falla: calcular desde /inmuebles
+      // 4. Fallback de contingencia si el endpoint falla: calcular desde /inmuebles
       if (_inmueblesRepository != null) {
         try {
           final inmueblesList = await _inmueblesRepository!.getInmuebles(padreId: _selectedPadreId);
@@ -75,6 +83,66 @@ class DashboardProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Enriquece las métricas calculando ocupación m², renta promedio y potencial
+  /// basados en las unidades arrendables reales (evitando duplicar matrices y subunidades).
+  DashboardKpiModel _enrichKpisWithInmuebles(DashboardKpiModel baseKpis, List<InmuebleModel> list) {
+    if (list.isEmpty) return baseKpis;
+
+    // Detectar matrices para no duplicar metrajes de edificios y sus subunidades
+    final parentIds = list
+        .map((e) => e.propiedadPadreId)
+        .where((id) => id != null && id > 0)
+        .toSet();
+
+    // Unidades arrendables: hijas o propiedades independientes sin subunidades
+    final leasableUnits = list.where((e) => !parentIds.contains(e.id)).toList();
+
+    // 1. Área total rentable (m²): suma de metrajes de unidades arrendables
+    final double computedAreaTotal = leasableUnits.fold(0.0, (sum, u) => sum + (u.metraje ?? 0.0));
+
+    // 2. Área ocupada / rentada (m²): suma de metrajes de unidades arrendables en estado 'rentado'
+    final double computedAreaOcupada = leasableUnits
+        .where((u) => u.isRentado)
+        .fold(0.0, (sum, u) => sum + (u.metraje ?? 0.0));
+
+    // 3. Área vacante (m²): total área rentable - área rentada
+    final double computedAreaVacante = (computedAreaTotal >= computedAreaOcupada)
+        ? (computedAreaTotal - computedAreaOcupada)
+        : 0.0;
+
+    // 4. Renta mensual base
+    final double computedRentaInmuebles = leasableUnits
+        .where((u) => u.isRentado)
+        .fold(0.0, (sum, u) => sum + u.valorRentaBase);
+
+    final double effectiveRentaMensual = (baseKpis.ingresosMensualesProyectados > 0)
+        ? baseKpis.ingresosMensualesProyectados
+        : computedRentaInmuebles;
+
+    // 5. Tasa de ocupación en m²: (m² rentados / m² rentables) * 100
+    final double computedTasaOcupacionM2 = (computedAreaTotal > 0)
+        ? ((computedAreaOcupada / computedAreaTotal) * 100)
+        : baseKpis.tasaOcupacion;
+
+    // 6. Renta Promedio Portafolio: Renta mensual base / Total m² rentados
+    final double computedRentaPromedioM2 = (computedAreaOcupada > 0)
+        ? (effectiveRentaMensual / computedAreaOcupada)
+        : 0.0;
+
+    // 7. Renta Potencial (100%): Renta Promedio ($/m²) * Total Área Rentable
+    final double computedRentaPotencial = (computedRentaPromedioM2 * computedAreaTotal);
+
+    return baseKpis.copyWith(
+      rentaMensualBase: baseKpis.rentaMensualBase ?? effectiveRentaMensual,
+      areaTotalRentable: baseKpis.areaTotalRentable ?? computedAreaTotal,
+      areaOcupada: baseKpis.areaOcupada ?? computedAreaOcupada,
+      areaVacante: baseKpis.areaVacante ?? computedAreaVacante,
+      tasaOcupacion: computedAreaTotal > 0 ? computedTasaOcupacionM2 : baseKpis.tasaOcupacion,
+      rentaPromedioM2: baseKpis.rentaPromedioM2 ?? computedRentaPromedioM2,
+      rentaPotencialTotal: baseKpis.rentaPotencialTotal ?? computedRentaPotencial,
+    );
   }
 
   DashboardKpiModel _calculateFromInmuebles(List<InmuebleModel> list) {
@@ -94,6 +162,15 @@ class DashboardProvider extends ChangeNotifier {
     }
 
     double mrr = 0.0;
+
+    final parentIds = list
+        .map((e) => e.propiedadPadreId)
+        .where((id) => id != null && id > 0)
+        .toSet();
+    final leasableUnits = list.where((e) => !parentIds.contains(e.id)).toList();
+
+    double totalArea = 0.0;
+    double areaRentada = 0.0;
 
     for (final item in list) {
       final isDispon = item.isDisponible;
@@ -138,8 +215,22 @@ class DashboardProvider extends ChangeNotifier {
       }
     }
 
+    for (final u in leasableUnits) {
+      final m = u.metraje ?? 0.0;
+      totalArea += m;
+      if (u.isRentado) {
+        areaRentada += m;
+      }
+    }
+
+    final double areaVacante = (totalArea >= areaRentada) ? (totalArea - areaRentada) : 0.0;
+    final double tasaM2 = totalArea > 0
+        ? (areaRentada / totalArea) * 100
+        : (list.isNotEmpty ? (rent / list.length) * 100 : 0.0);
+    final double rentaPromM2 = areaRentada > 0 ? (mrr / areaRentada) : 0.0;
+    final double rentaPotencial = rentaPromM2 * totalArea;
+
     final total = list.length;
-    final tasa = total > 0 ? (rent / total) * 100 : 0.0;
 
     final distList = DashboardKpiModel.labelsTipos.map((tipo) {
       final counts = mapTipos[tipo] ?? [0, 0];
@@ -164,9 +255,15 @@ class DashboardProvider extends ChangeNotifier {
         subActivas: sAct,
         subInactivas: sInac,
       ),
-      tasaOcupacion: tasa,
+      tasaOcupacion: tasaM2,
       ingresosMensualesProyectados: mrr,
       distribucionTiposEstado: distList,
+      rentaMensualBase: mrr,
+      areaTotalRentable: totalArea,
+      areaOcupada: areaRentada,
+      areaVacante: areaVacante,
+      rentaPromedioM2: rentaPromM2,
+      rentaPotencialTotal: rentaPotencial,
     );
   }
 

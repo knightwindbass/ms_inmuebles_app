@@ -148,5 +148,72 @@ void main() {
       expect(inq.logo, equals('https://tu-servidor.com/wp-content/uploads/2026/09/logo-rosenheimer.png'));
       expect(inq.isActivo, isTrue);
     });
+
+    test('DashboardKpiModel no tiene valores falsos hardcodeados por defecto', () {
+      final emptyModel = DashboardKpiModel(
+        inmuebles: InmueblesDesglose(),
+        jerarquia: JerarquiaDesglose(),
+        tasaOcupacion: 0.0,
+        ingresosMensualesProyectados: 0.0,
+        distribucionTiposEstado: [],
+      );
+
+      expect(emptyModel.displayRentaMensual, equals(0.0));
+      expect(emptyModel.displayTasaOcupacion, equals(0.0));
+      expect(emptyModel.displayAreaTotal, equals(0.0));
+      expect(emptyModel.displayAreaOcupada, equals(0.0));
+      expect(emptyModel.displayAreaVacante, equals(0.0));
+      expect(emptyModel.displayRentaPromedioM2, equals(0.0));
+      expect(emptyModel.displayRentaPotencial, equals(0.0));
+      expect(emptyModel.displayTendenciaRentaMensual, isNull);
+      expect(emptyModel.displayTendenciaRentaPromedio, isNull);
+      expect(emptyModel.displayTendenciaRentaPotencial, isNull);
+    });
+
+    test('Cálculo de métricas de portafolio inmobiliario respeta fórmulas reales', () {
+      const areaRentable = 10000.0;
+      const areaRentada = 8000.0;
+      const rentaMensual = 40000.0;
+
+      // 1. Tasa Ocupación m² = (m² rentados / m² rentables) * 100
+      const tasaOcupacion = (areaRentada / areaRentable) * 100;
+      expect(tasaOcupacion, equals(80.0));
+
+      // 2. Área Vacante = Área rentable - Área rentada
+      const areaVacante = areaRentable - areaRentada;
+      expect(areaVacante, equals(2000.0));
+
+      // 3. Renta promedio por m² = Renta mensual / Área rentada
+      const rentaPromedioM2 = rentaMensual / areaRentada;
+      expect(rentaPromedioM2, equals(5.0));
+
+      // 4. Renta potencial (100%) = Renta promedio por m² * Área total rentable
+      const rentaPotencial = rentaPromedioM2 * areaRentable;
+      expect(rentaPotencial, equals(50000.0));
+
+      // 5. Upside = Renta potencial - Renta mensual
+      const upside = rentaPotencial - rentaMensual;
+      expect(upside, equals(10000.0));
+
+      final model = DashboardKpiModel(
+        inmuebles: InmueblesDesglose(),
+        jerarquia: JerarquiaDesglose(),
+        tasaOcupacion: tasaOcupacion,
+        ingresosMensualesProyectados: rentaMensual,
+        distribucionTiposEstado: [],
+        areaTotalRentable: areaRentable,
+        areaOcupada: areaRentada,
+        areaVacante: areaVacante,
+        rentaPromedioM2: rentaPromedioM2,
+        rentaPotencialTotal: rentaPotencial,
+      );
+
+      expect(model.displayTasaOcupacion, equals(80.0));
+      expect(model.displayAreaTotal, equals(10000.0));
+      expect(model.displayAreaOcupada, equals(8000.0));
+      expect(model.displayAreaVacante, equals(2000.0));
+      expect(model.displayRentaPromedioM2, equals(5.0));
+      expect(model.displayRentaPotencial, equals(50000.0));
+    });
   });
 }

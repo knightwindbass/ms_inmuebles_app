@@ -48,17 +48,17 @@ class DashboardKpiModel {
     this.slogan,
   });
 
-  // Getters inteligentes con fallback ejecutivo
-  double get displayRentaMensual => rentaMensualBase ?? (ingresosMensualesProyectados > 0 ? ingresosMensualesProyectados : 790192.0);
-  double get displayTasaOcupacion => tasaOcupacion > 0 ? tasaOcupacion : 96.4;
-  double get displayAreaTotal => areaTotalRentable ?? 162875.0;
-  double get displayAreaOcupada => areaOcupada ?? (displayAreaTotal * (displayTasaOcupacion / 100));
-  double get displayAreaVacante => areaVacante ?? (displayAreaTotal - displayAreaOcupada);
-  double get displayRentaPromedioM2 => rentaPromedioM2 ?? 4.85;
-  double get displayRentaPotencial => rentaPotencialTotal ?? 815658.0;
-  String get displayTendenciaRentaMensual => tendenciaRentaMensual ?? '+2.4%';
-  String get displayTendenciaRentaPromedio => tendenciaRentaPromedio ?? '+1.8%';
-  String get displayTendenciaRentaPotencial => tendenciaRentaPotencial ?? '+3.2%';
+  // Getters inteligentes calculados dinámicamente según la realidad del portafolio
+  double get displayRentaMensual => rentaMensualBase ?? (ingresosMensualesProyectados > 0 ? ingresosMensualesProyectados : 0.0);
+  double get displayTasaOcupacion => tasaOcupacion;
+  double get displayAreaTotal => areaTotalRentable ?? 0.0;
+  double get displayAreaOcupada => areaOcupada ?? (displayAreaTotal > 0 ? (displayAreaTotal * (displayTasaOcupacion / 100)) : 0.0);
+  double get displayAreaVacante => areaVacante ?? (displayAreaTotal >= displayAreaOcupada ? (displayAreaTotal - displayAreaOcupada) : 0.0);
+  double get displayRentaPromedioM2 => rentaPromedioM2 ?? (displayAreaOcupada > 0 ? (displayRentaMensual / displayAreaOcupada) : 0.0);
+  double get displayRentaPotencial => rentaPotencialTotal ?? (displayRentaPromedioM2 * displayAreaTotal);
+  String? get displayTendenciaRentaMensual => tendenciaRentaMensual;
+  String? get displayTendenciaRentaPromedio => tendenciaRentaPromedio;
+  String? get displayTendenciaRentaPotencial => tendenciaRentaPotencial;
   String get displaySlogan => slogan ?? 'ESPACIOS QUE IMPULSAN';
 
   DashboardKpiModel copyWith({
@@ -225,10 +225,15 @@ class InmueblesDesglose {
           final est = (item['estado'] ?? item['status'] ?? item['tipo'] ?? '').toString().toLowerCase();
           final cnt = _toInt(item['conteo'] ?? item['cantidad'] ?? item['total'] ?? item['count']);
           tot += cnt;
-          if (est.contains('disp') || est.contains('libre')) d += cnt;
-          else if (est.contains('rent') || est.contains('ocup')) r += cnt;
-          else if (est.contains('mant')) m += cnt;
-          else if (est.contains('inac')) i += cnt;
+          if (est.contains('disp') || est.contains('libre')) {
+            d += cnt;
+          } else if (est.contains('rent') || est.contains('ocup')) {
+            r += cnt;
+          } else if (est.contains('mant')) {
+            m += cnt;
+          } else if (est.contains('inac')) {
+            i += cnt;
+          }
         }
       }
       return InmueblesDesglose(total: tot, disponibles: d, rentados: r, mantenimiento: m, inactivo: i);
