@@ -14,9 +14,26 @@ class AppFormatters {
 
   static final NumberFormat _percentFormat = NumberFormat.percentPattern();
 
+  static final NumberFormat _currencyNoDecimalsFormat = NumberFormat.currency(
+    symbol: '\$',
+    decimalDigits: 0,
+  );
+
+  static final NumberFormat _integerFormat = NumberFormat('#,##0', 'en_US');
+
   static String currency(num? amount) {
     if (amount == null) return '\$0.00';
     return _currencyFormat.format(amount);
+  }
+
+  static String currencyNoDecimals(num? amount) {
+    if (amount == null) return '\$0';
+    return _currencyNoDecimalsFormat.format(amount);
+  }
+
+  static String number(num? amount) {
+    if (amount == null) return '0';
+    return _integerFormat.format(amount);
   }
 
   static String compactCurrency(num? amount) {

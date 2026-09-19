@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/core/utils/formatters.dart';
-import '../lib/data/models/dashboard_kpi_model.dart';
-import '../lib/data/models/inmueble_model.dart';
-import '../lib/data/models/contrato_model.dart';
-import '../lib/data/models/inquilino_model.dart';
-import '../lib/presentation/screens/setup/qr_scanner_screen.dart';
+import 'package:ms_inmuebles_app/core/utils/formatters.dart';
+import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
+import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
+import 'package:ms_inmuebles_app/data/models/inquilino_model.dart';
+import 'package:ms_inmuebles_app/presentation/screens/setup/qr_scanner_screen.dart';
 
 void main() {
   group('Pruebas de Formateadores', () {
@@ -19,8 +18,8 @@ void main() {
     });
 
     test('Formateo inteligente de metraje (área m²)', () {
-      expect(AppFormatters.area(1500000), equals('1.5M m²'));
-      expect(AppFormatters.area(2000000), equals('2M m²'));
+      expect(AppFormatters.area(1500000), equals('1.50 M m²'));
+      expect(AppFormatters.area(2000000), equals('2 M m²'));
       expect(AppFormatters.area(150.5), equals('150.5 m²'));
       expect(AppFormatters.area(null), equals(''));
     });

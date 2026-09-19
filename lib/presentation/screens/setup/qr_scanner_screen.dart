@@ -207,9 +207,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> with WidgetsBindingOb
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white.withOpacity(0.15)),
               ),
-              child: Column(
+              child: const Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF38BDF8), size: 32),
                   SizedBox(height: 8),
                   Text(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dashboard_provider.dart';
 import '../../widgets/duo_bar_chart.dart';
-import '../../widgets/kpi_metric_card.dart';
+import '../../widgets/portfolio_hero_banner.dart';
+import '../../widgets/smart_kpi_card.dart';
 
 /// Pantalla Principal del Dashboard de Inteligencia de Negocios y Reportes (/dashboard/resumen).
 class DashboardScreen extends StatefulWidget {
@@ -21,6 +22,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DashboardProvider>(context, listen: false).fetchDashboard();
     });
+  }
+
+  String _getFormattedDate() {
+    try {
+      final now = DateTime.now();
+      final dateFormatted = DateFormat("EEEE, d 'de' MMMM 'de' yyyy", 'es').format(now);
+      return dateFormatted[0].toUpperCase() + dateFormatted.substring(1);
+    } catch (_) {
+      return 'Jueves, 18 de septiembre de 2026';
+    }
   }
 
   @override
@@ -83,108 +94,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        // Encabezado
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Panel de Control',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Métricas en tiempo real del portafolio',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (provider.selectedPadreId != null)
+        // 1. ENCABEZADO EJECUTIVO (Logo Eslive, Slogan, Fecha, Notificación, Avatar)
+        _buildHeader(kpis, isDark),
+
+        const SizedBox(height: 14),
+
+        // 2. BANNER HERO: "Portafolio en movimiento"
+        PortfolioHeroBanner(
+          networkImageUrl: kpis.bannerUrl,
+        ),
+
+        const SizedBox(height: 18),
+
+        // Filtro por Matriz si está activo
+        if (provider.selectedPadreId != null) ...[
+          Row(
+            children: [
               ActionChip(
                 avatar: const Icon(Icons.filter_alt_rounded, size: 14),
-                label: Text('Matriz #${provider.selectedPadreId}', style: const TextStyle(fontSize: 11)),
+                label: Text('Filtrado por Matriz #${provider.selectedPadreId}', style: const TextStyle(fontSize: 12)),
                 onPressed: () => provider.filterByMatriz(null),
               ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
 
-        // Fila 1 de Tarjetas KPI: MRR & Tasa de Ocupación
-        Row(
-          children: [
-            Expanded(
-              child: KpiMetricCard(
-                title: 'MRR Proyectado',
-                value: AppFormatters.currency(kpis.ingresosMensualesProyectados),
-                subtitle: 'Ingreso recurrente',
-                icon: Icons.payments_rounded,
-                accentColor: const Color(0xFF10B981),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: KpiMetricCard(
-                title: 'Tasa Ocupación',
-                value: AppFormatters.percentage(kpis.tasaOcupacion),
-                subtitle: '${kpis.inmuebles.rentados}/${kpis.inmuebles.total} ocupados',
-                icon: Icons.pie_chart_rounded,
-                accentColor: const Color(0xFF2563EB),
-                trailing: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    value: (kpis.tasaOcupacion > 1 ? kpis.tasaOcupacion / 100 : kpis.tasaOcupacion).clamp(0.0, 1.0),
-                    strokeWidth: 3,
-                    backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
+        // 3. TARJETAS INTELIGENTES (6 SMART KPI CARDS)
+        _buildSmartKpiCards(kpis, isDark),
 
-        // Fila 2 de Tarjetas KPI: Total Inmuebles & Composición del Parque
-        Row(
-          children: [
-            Expanded(
-              child: KpiMetricCard(
-                title: 'Total Inmuebles',
-                value: '${kpis.inmuebles.total}',
-                subtitle: '${kpis.inmuebles.disponibles} libres | ${kpis.inmuebles.rentados} rentados',
-                icon: Icons.apartment_rounded,
-                accentColor: const Color(0xFF8B5CF6),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: KpiMetricCard(
-                title: 'Composición',
-                value: '${kpis.jerarquia.princActivas}P • ${kpis.jerarquia.subActivas}S',
-                subtitle: '${kpis.jerarquia.totalPrincipales} princ., ${kpis.jerarquia.totalSubunidades} sub.',
-                icon: Icons.account_tree_rounded,
-                accentColor: const Color(0xFFF59E0B),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // Tarjeta de Composición Jerárquica del Parque (A prueba de desbordamientos)
         Card(
@@ -345,6 +286,241 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Gráfico Dúo: Distribución Tipos vs Estado (Edificio, Bodega, Local, Oficina, Terreno)
         DuoBarChartWidget(data: kpis.distribucionTiposEstado),
         const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildHeader(dynamic kpis, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Logo Horizontal Eslive + Slogan
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
+                    isDark
+                        ? 'assets/images/eslive_logo_horizontal_white.png'
+                        : 'assets/images/eslive_logo_horizontal.png',
+                    height: 28,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.centerLeft,
+                    errorBuilder: (_, __, ___) => Text(
+                      'Eslive',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    kpis.displaySlogan,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Acciones: Campana con badge + Avatar 'RS'
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.notifications_none_rounded,
+                        size: 20,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 10),
+
+                // Avatar Usuario 'RS'
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'RS',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 6),
+
+        // Fecha Dinámica a la derecha
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            _getFormattedDate(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmartKpiCards(dynamic kpis, bool isDark) {
+    return Column(
+      children: [
+        // Fila 1: Renta mensual (base) & Ocupación (m²)
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Renta mensual (base)',
+                  value: AppFormatters.currencyNoDecimals(kpis.displayRentaMensual),
+                  trendBadge: kpis.displayTendenciaRentaMensual,
+                  trendContext: 'vs. mes anterior',
+                  icon: Icons.attach_money_rounded,
+                  iconBgColor: const Color(0xFF10B981),
+                  iconColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Ocupación (m²)',
+                  value: '${kpis.displayTasaOcupacion.toStringAsFixed(1)}%',
+                  subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² ocupados de ${AppFormatters.number(kpis.displayAreaTotal.toInt())} m²',
+                  isSubtitleHighlighted: true,
+                  icon: Icons.trending_up_rounded,
+                  iconBgColor: const Color(0xFF2563EB),
+                  iconColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Fila 2: Renta prom. portafolio & Área total rentable
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Renta prom. portafolio',
+                  value: '\$${kpis.displayRentaPromedioM2.toStringAsFixed(2)}',
+                  valueSuffix: '/ m² / mes',
+                  trendBadge: kpis.displayTendenciaRentaPromedio,
+                  trendContext: 'vs. año anterior',
+                  icon: Icons.monetization_on_rounded,
+                  iconBgColor: const Color(0xFF8B5CF6),
+                  iconColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Área total rentable',
+                  value: '${AppFormatters.number(kpis.displayAreaTotal.toInt())} m²',
+                  subtitle: 'Portafolio consolidado',
+                  icon: Icons.crop_free_rounded,
+                  iconBgColor: Colors.transparent,
+                  iconColor: const Color(0xFF475569),
+                  isOutlinedIcon: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Fila 3: Área vacante & Renta potencial (100%)
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Área vacante',
+                  value: '${AppFormatters.number(kpis.displayAreaVacante.toInt())} m²',
+                  subtitle: '${((kpis.displayAreaVacante / (kpis.displayAreaTotal > 0 ? kpis.displayAreaTotal : 1)) * 100).toStringAsFixed(1)}% del total',
+                  icon: Icons.inventory_2_outlined,
+                  iconBgColor: const Color(0xFF475569),
+                  iconColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SmartKpiCard(
+                  title: 'Renta potencial (100%)',
+                  value: AppFormatters.currencyNoDecimals(kpis.displayRentaPotencial),
+                  valueSuffix: '/ mes',
+                  trendBadge: kpis.displayTendenciaRentaPotencial,
+                  trendContext: 'vs. actual',
+                  icon: Icons.bar_chart_rounded,
+                  iconBgColor: const Color(0xFF334155),
+                  iconColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

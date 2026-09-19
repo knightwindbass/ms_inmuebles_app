@@ -24,7 +24,6 @@ class _InmuebleDetailScreenState extends State<InmuebleDetailScreen> with Single
   late TabController _tabController;
   InmuebleModel? _inmueble;
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
