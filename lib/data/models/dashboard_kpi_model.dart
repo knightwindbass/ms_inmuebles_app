@@ -5,6 +5,7 @@ class DashboardKpiModel {
   final double tasaOcupacion;
   final double ingresosMensualesProyectados;
   final List<DistribucionTipoEstado> distribucionTiposEstado;
+  final List<RentabilidadUbicacion> rentabilidadUbicacion;
 
   // Nuevas Métricas Inteligentes (Smart Cards) y Personalización por Tenant
   final double? rentaMensualBase;
@@ -34,6 +35,7 @@ class DashboardKpiModel {
     required this.tasaOcupacion,
     required this.ingresosMensualesProyectados,
     required this.distribucionTiposEstado,
+    this.rentabilidadUbicacion = const [],
     this.rentaMensualBase,
     this.areaTotalRentable,
     this.areaOcupada,
@@ -67,6 +69,7 @@ class DashboardKpiModel {
     double? tasaOcupacion,
     double? ingresosMensualesProyectados,
     List<DistribucionTipoEstado>? distribucionTiposEstado,
+    List<RentabilidadUbicacion>? rentabilidadUbicacion,
     double? rentaMensualBase,
     double? areaTotalRentable,
     double? areaOcupada,
@@ -86,6 +89,7 @@ class DashboardKpiModel {
       tasaOcupacion: tasaOcupacion ?? this.tasaOcupacion,
       ingresosMensualesProyectados: ingresosMensualesProyectados ?? this.ingresosMensualesProyectados,
       distribucionTiposEstado: distribucionTiposEstado ?? this.distribucionTiposEstado,
+      rentabilidadUbicacion: rentabilidadUbicacion ?? this.rentabilidadUbicacion,
       rentaMensualBase: rentaMensualBase ?? this.rentaMensualBase,
       areaTotalRentable: areaTotalRentable ?? this.areaTotalRentable,
       areaOcupada: areaOcupada ?? this.areaOcupada,
@@ -155,12 +159,26 @@ class DashboardKpiModel {
       );
     }).toList();
 
+    // Normalización de Rentabilidad por Ubicación
+    final List<dynamic> rawRentabilidad = (json['rentabilidad_ubicacion'] is List)
+        ? json['rentabilidad_ubicacion'] as List<dynamic>
+        : [];
+    final List<RentabilidadUbicacion> parsedRentabilidad = [];
+    for (final item in rawRentabilidad) {
+      if (item is Map<String, dynamic>) {
+        parsedRentabilidad.add(RentabilidadUbicacion.fromJson(item));
+      } else if (item is Map) {
+        parsedRentabilidad.add(RentabilidadUbicacion.fromJson(Map<String, dynamic>.from(item)));
+      }
+    }
+
     return DashboardKpiModel(
       inmuebles: inmueblesObj,
       jerarquia: jerarquiaObj,
       tasaOcupacion: _toDouble(rawTasa),
       ingresosMensualesProyectados: _toDouble(rawMrr),
       distribucionTiposEstado: normalizedDistribution,
+      rentabilidadUbicacion: parsedRentabilidad,
       rentaMensualBase: json['renta_mensual_base'] != null ? _toDouble(json['renta_mensual_base']) : null,
       areaTotalRentable: json['area_total_rentable'] != null ? _toDouble(json['area_total_rentable']) : null,
       areaOcupada: json['area_ocupada'] != null ? _toDouble(json['area_ocupada']) : null,
@@ -376,5 +394,40 @@ class DistribucionTipoEstado {
     if (value is num) return value.toInt();
     if (value is String) return int.tryParse(value) ?? 0;
     return 0;
+  }
+}
+
+/// Modelo para el reporte de Rentabilidad Promedio por Ubicación (Complejos Rentados).
+class RentabilidadUbicacion {
+  final String ubicacion;
+  final int cantidad;
+  final double promedio;
+
+  RentabilidadUbicacion({
+    required this.ubicacion,
+    required this.cantidad,
+    required this.promedio,
+  });
+
+  factory RentabilidadUbicacion.fromJson(Map<String, dynamic> json) {
+    return RentabilidadUbicacion(
+      ubicacion: json['ubicacion']?.toString() ?? 'Sin ubicación',
+      cantidad: _toInt(json['cantidad']),
+      promedio: _toDouble(json['promedio']),
+    );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 }

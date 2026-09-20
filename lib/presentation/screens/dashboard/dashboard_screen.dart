@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dashboard_provider.dart';
-import '../../widgets/duo_bar_chart.dart';
+import '../../widgets/analytics_slide_block.dart';
 import '../../widgets/portfolio_hero_banner.dart';
 import '../../widgets/smart_kpi_card.dart';
 
@@ -303,8 +303,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Gráfico Dúo: Distribución Tipos vs Estado (Edificio, Bodega, Local, Oficina, Terreno)
-        DuoBarChartWidget(data: kpis.distribucionTiposEstado),
+        // Bloque Deslizable (Slide): Tipología & Rentabilidad por Ubicación
+        AnalyticsSlideBlock(
+          distribucion: kpis.distribucionTiposEstado,
+          rentabilidad: kpis.rentabilidadUbicacion,
+        ),
         const SizedBox(height: 24),
       ],
     );

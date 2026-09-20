@@ -5,10 +5,12 @@ import '../../data/models/dashboard_kpi_model.dart';
 /// Gráfico minimalista y responsivo de barras comparativas (Libres vs Ocupadas por tipología de inmueble).
 class DuoBarChartWidget extends StatelessWidget {
   final List<DistribucionTipoEstado> data;
+  final bool showCard;
 
   const DuoBarChartWidget({
     super.key,
     required this.data,
+    this.showCard = true,
   });
 
   IconData _getIconForTipo(String tipo) {
@@ -34,19 +36,18 @@ class DuoBarChartWidget extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     if (data.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Text(
-              'No hay datos de distribución disponibles',
-              style: TextStyle(
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              ),
+      final emptyBody = Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'No hay datos de distribución disponibles',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
           ),
         ),
       );
+      return showCard ? Card(child: emptyBody) : emptyBody;
     }
 
     // Calcular el valor máximo para escalar proporcionalmente las barras
@@ -56,11 +57,10 @@ class DuoBarChartWidget extends StatelessWidget {
       if (item.ocupadas > maxVal) maxVal = item.ocupadas;
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final chartContent = Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,8 +114,9 @@ class DuoBarChartWidget extends StatelessWidget {
             ...data.map((item) => _buildBarRow(item, maxVal, isDark)),
           ],
         ),
-      ),
-    );
+      );
+
+    return showCard ? Card(child: chartContent) : chartContent;
   }
 
   Widget _buildLegendItem({

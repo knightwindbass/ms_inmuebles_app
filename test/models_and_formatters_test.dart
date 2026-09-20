@@ -215,5 +215,38 @@ void main() {
       expect(model.displayRentaPromedioM2, equals(5.0));
       expect(model.displayRentaPotencial, equals(50000.0));
     });
+
+    test('DashboardKpiModel deserializa correctamente rentabilidad_ubicacion', () {
+      final jsonSample = {
+        "inmuebles": {"total": 117},
+        "jerarquia": {"princ_activas": 2, "princ_inactivas": 0, "sub_activas": 115, "sub_inactivas": 0},
+        "tasa_ocupacion": 100.0,
+        "ingresos_mensuales_proyectados": 283000.0,
+        "distribucion_tipos_estado": [],
+        "rentabilidad_ubicacion": [
+          {
+            "ubicacion": "Parque Industrial Norte",
+            "cantidad": "106",
+            "promedio": "1113.20"
+          },
+          {
+            "ubicacion": "Av. República y Amazonas",
+            "cantidad": "11",
+            "promedio": "15000.00"
+          }
+        ]
+      };
+
+      final model = DashboardKpiModel.fromJson(jsonSample);
+
+      expect(model.rentabilidadUbicacion.length, equals(2));
+      expect(model.rentabilidadUbicacion[0].ubicacion, equals('Parque Industrial Norte'));
+      expect(model.rentabilidadUbicacion[0].cantidad, equals(106));
+      expect(model.rentabilidadUbicacion[0].promedio, equals(1113.20));
+
+      expect(model.rentabilidadUbicacion[1].ubicacion, equals('Av. República y Amazonas'));
+      expect(model.rentabilidadUbicacion[1].cantidad, equals(11));
+      expect(model.rentabilidadUbicacion[1].promedio, equals(15000.00));
+    });
   });
 }

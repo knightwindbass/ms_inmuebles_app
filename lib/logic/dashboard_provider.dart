@@ -134,6 +134,30 @@ class DashboardProvider extends ChangeNotifier {
     // 7. Renta Potencial (100%): Renta Promedio ($/m²) * Total Área Rentable
     final double computedRentaPotencial = (computedRentaPromedioM2 * computedAreaTotal);
 
+    // 8. Rentabilidad por Ubicación (Complejos Rentados)
+    List<RentabilidadUbicacion> effectiveRentabilidad = baseKpis.rentabilidadUbicacion;
+    if (effectiveRentabilidad.isEmpty) {
+      final rentedUnits = leasableUnits.where((u) => u.isRentado).toList();
+      final Map<String, List<InmuebleModel>> groupedByLocation = {};
+      for (final u in rentedUnits) {
+        final loc = (u.direccion != null && u.direccion!.trim().isNotEmpty)
+            ? u.direccion!.trim()
+            : ((u.ciudad != null && u.ciudad!.trim().isNotEmpty)
+                ? u.ciudad!.trim()
+                : u.nombre.trim());
+        groupedByLocation.putIfAbsent(loc, () => []).add(u);
+      }
+      effectiveRentabilidad = groupedByLocation.entries.map((entry) {
+        final count = entry.value.length;
+        final total = entry.value.fold(0.0, (sum, item) => sum + item.valorRentaBase);
+        return RentabilidadUbicacion(
+          ubicacion: entry.key,
+          cantidad: count,
+          promedio: count > 0 ? (total / count) : 0.0,
+        );
+      }).toList();
+    }
+
     return baseKpis.copyWith(
       rentaMensualBase: baseKpis.rentaMensualBase ?? effectiveRentaMensual,
       areaTotalRentable: baseKpis.areaTotalRentable ?? computedAreaTotal,
@@ -142,6 +166,7 @@ class DashboardProvider extends ChangeNotifier {
       tasaOcupacion: computedAreaTotal > 0 ? computedTasaOcupacionM2 : baseKpis.tasaOcupacion,
       rentaPromedioM2: baseKpis.rentaPromedioM2 ?? computedRentaPromedioM2,
       rentaPotencialTotal: baseKpis.rentaPotencialTotal ?? computedRentaPotencial,
+      rentabilidadUbicacion: effectiveRentabilidad,
     );
   }
 
@@ -230,6 +255,27 @@ class DashboardProvider extends ChangeNotifier {
     final double rentaPromM2 = areaRentada > 0 ? (mrr / areaRentada) : 0.0;
     final double rentaPotencial = rentaPromM2 * totalArea;
 
+    // Rentabilidad por Ubicación
+    final rentedUnits = leasableUnits.where((u) => u.isRentado).toList();
+    final Map<String, List<InmuebleModel>> groupedByLocation = {};
+    for (final u in rentedUnits) {
+      final loc = (u.direccion != null && u.direccion!.trim().isNotEmpty)
+          ? u.direccion!.trim()
+          : ((u.ciudad != null && u.ciudad!.trim().isNotEmpty)
+              ? u.ciudad!.trim()
+              : u.nombre.trim());
+      groupedByLocation.putIfAbsent(loc, () => []).add(u);
+    }
+    final computedRentabilidad = groupedByLocation.entries.map((entry) {
+      final count = entry.value.length;
+      final total = entry.value.fold(0.0, (sum, item) => sum + item.valorRentaBase);
+      return RentabilidadUbicacion(
+        ubicacion: entry.key,
+        cantidad: count,
+        promedio: count > 0 ? (total / count) : 0.0,
+      );
+    }).toList();
+
     final total = list.length;
 
     final distList = DashboardKpiModel.labelsTipos.map((tipo) {
@@ -258,6 +304,7 @@ class DashboardProvider extends ChangeNotifier {
       tasaOcupacion: tasaM2,
       ingresosMensualesProyectados: mrr,
       distribucionTiposEstado: distList,
+      rentabilidadUbicacion: computedRentabilidad,
       rentaMensualBase: mrr,
       areaTotalRentable: totalArea,
       areaOcupada: areaRentada,
