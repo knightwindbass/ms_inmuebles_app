@@ -150,10 +150,12 @@ class DashboardProvider extends ChangeNotifier {
       effectiveRentabilidad = groupedByLocation.entries.map((entry) {
         final count = entry.value.length;
         final total = entry.value.fold(0.0, (sum, item) => sum + item.valorRentaBase);
+        final totalM2 = entry.value.fold(0.0, (sum, item) => sum + (item.metraje ?? 0.0));
         return RentabilidadUbicacion(
           ubicacion: entry.key,
           cantidad: count,
           promedio: count > 0 ? (total / count) : 0.0,
+          promedioM2: totalM2 > 0 ? (total / totalM2) : 0.0,
         );
       }).toList();
     }
@@ -269,10 +271,12 @@ class DashboardProvider extends ChangeNotifier {
     final computedRentabilidad = groupedByLocation.entries.map((entry) {
       final count = entry.value.length;
       final total = entry.value.fold(0.0, (sum, item) => sum + item.valorRentaBase);
+      final totalM2 = entry.value.fold(0.0, (sum, item) => sum + (item.metraje ?? 0.0));
       return RentabilidadUbicacion(
         ubicacion: entry.key,
         cantidad: count,
         promedio: count > 0 ? (total / count) : 0.0,
+        promedioM2: totalM2 > 0 ? (total / totalM2) : 0.0,
       );
     }).toList();
 

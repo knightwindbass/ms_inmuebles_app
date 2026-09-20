@@ -153,6 +153,17 @@ class RentabilidadUbicacionTable extends StatelessWidget {
                     ),
                     numeric: true,
                   ),
+                  DataColumn(
+                    label: Text(
+                      'Valor Promedio (\$/m²)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    numeric: true,
+                  ),
                 ],
                 rows: data.map((item) {
                   return DataRow(
@@ -207,6 +218,16 @@ class RentabilidadUbicacionTable extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             fontSize: 12.5,
                             color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          '\$${item.promedioM2.toStringAsFixed(2)} / m²',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                            color: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
                           ),
                         ),
                       ),

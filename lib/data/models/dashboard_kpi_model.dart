@@ -402,11 +402,13 @@ class RentabilidadUbicacion {
   final String ubicacion;
   final int cantidad;
   final double promedio;
+  final double promedioM2;
 
   RentabilidadUbicacion({
     required this.ubicacion,
     required this.cantidad,
     required this.promedio,
+    this.promedioM2 = 0.0,
   });
 
   factory RentabilidadUbicacion.fromJson(Map<String, dynamic> json) {
@@ -414,6 +416,7 @@ class RentabilidadUbicacion {
       ubicacion: json['ubicacion']?.toString() ?? 'Sin ubicación',
       cantidad: _toInt(json['cantidad']),
       promedio: _toDouble(json['promedio']),
+      promedioM2: _toDouble(json['promedio_m2'] ?? json['promedio_metro_cuadrado'] ?? json['valor_promedio_m2']),
     );
   }
 
