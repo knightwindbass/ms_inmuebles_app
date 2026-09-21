@@ -154,6 +154,7 @@ class DashboardProvider extends ChangeNotifier {
         return RentabilidadUbicacion(
           ubicacion: entry.key,
           cantidad: count,
+          total: total,
           promedio: count > 0 ? (total / count) : 0.0,
           promedioM2: totalM2 > 0 ? (total / totalM2) : 0.0,
         );
@@ -275,6 +276,7 @@ class DashboardProvider extends ChangeNotifier {
       return RentabilidadUbicacion(
         ubicacion: entry.key,
         cantidad: count,
+        total: total,
         promedio: count > 0 ? (total / count) : 0.0,
         promedioM2: totalM2 > 0 ? (total / totalM2) : 0.0,
       );

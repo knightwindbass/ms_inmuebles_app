@@ -144,7 +144,7 @@ class RentabilidadUbicacionTable extends StatelessWidget {
                   ),
                   DataColumn(
                     label: Text(
-                      'Promedio (MRR)',
+                      'Renta Total (\$)',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
@@ -213,7 +213,7 @@ class RentabilidadUbicacionTable extends StatelessWidget {
                       ),
                       DataCell(
                         Text(
-                          AppFormatters.currency(item.promedio),
+                          AppFormatters.currency(item.total > 0 ? item.total : (item.cantidad * item.promedio)),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 12.5,

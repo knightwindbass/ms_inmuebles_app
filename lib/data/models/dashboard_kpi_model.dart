@@ -397,10 +397,11 @@ class DistribucionTipoEstado {
   }
 }
 
-/// Modelo para el reporte de Rentabilidad Promedio por Ubicación (Complejos Rentados).
+/// Modelo para el reporte de Rentabilidad por Ubicación (Complejos Rentados).
 class RentabilidadUbicacion {
   final String ubicacion;
   final int cantidad;
+  final double total;
   final double promedio;
   final double promedioM2;
 
@@ -408,14 +409,28 @@ class RentabilidadUbicacion {
     required this.ubicacion,
     required this.cantidad,
     required this.promedio,
+    this.total = 0.0,
     this.promedioM2 = 0.0,
   });
 
   factory RentabilidadUbicacion.fromJson(Map<String, dynamic> json) {
+    final cant = _toInt(json['cantidad']);
+    final prom = _toDouble(json['promedio']);
+    final explicitTotal = _toDouble(
+      json['total'] ??
+          json['total_renta'] ??
+          json['renta_total'] ??
+          json['monto_total'] ??
+          json['suma'] ??
+          json['valor_total'],
+    );
+    final tot = explicitTotal > 0 ? explicitTotal : (cant * prom);
+
     return RentabilidadUbicacion(
       ubicacion: json['ubicacion']?.toString() ?? 'Sin ubicación',
-      cantidad: _toInt(json['cantidad']),
-      promedio: _toDouble(json['promedio']),
+      cantidad: cant,
+      total: tot,
+      promedio: prom,
       promedioM2: _toDouble(json['promedio_m2'] ?? json['promedio_metro_cuadrado'] ?? json['valor_promedio_m2']),
     );
   }

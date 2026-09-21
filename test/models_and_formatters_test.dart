@@ -234,7 +234,8 @@ void main() {
             "ubicacion": "Av. República y Amazonas",
             "cantidad": "11",
             "promedio": "15000.00",
-            "promedio_m2": "12.50"
+            "promedio_m2": "12.50",
+            "total": "165000.00"
           }
         ]
       };
@@ -245,11 +246,13 @@ void main() {
       expect(model.rentabilidadUbicacion[0].ubicacion, equals('Parque Industrial Norte'));
       expect(model.rentabilidadUbicacion[0].cantidad, equals(106));
       expect(model.rentabilidadUbicacion[0].promedio, equals(1113.20));
+      expect(model.rentabilidadUbicacion[0].total, closeTo(117999.20, 0.01));
       expect(model.rentabilidadUbicacion[0].promedioM2, equals(4.85));
 
       expect(model.rentabilidadUbicacion[1].ubicacion, equals('Av. República y Amazonas'));
       expect(model.rentabilidadUbicacion[1].cantidad, equals(11));
       expect(model.rentabilidadUbicacion[1].promedio, equals(15000.00));
+      expect(model.rentabilidadUbicacion[1].total, equals(165000.00));
       expect(model.rentabilidadUbicacion[1].promedioM2, equals(12.50));
     });
   });
