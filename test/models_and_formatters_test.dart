@@ -93,6 +93,82 @@ void main() {
       expect(contratoMensual.inmuebleNombre, equals('Bodega M2'));
     });
 
+    test('ContratoModel agrupa correctamente contratos por ID consolidando montos y múltiples inmuebles', () {
+      final rawList = [
+        ContratoModel.fromJson({
+          "id": "15",
+          "numero_contrato": "CTR-BODEGAS-01",
+          "fecha_inicio": "2025-01-01",
+          "fecha_fin": "2026-01-01",
+          "valor_pactado": "500.00",
+          "frecuencia_pago": "mensual",
+          "estado": "vigente",
+          "inquilino": "Logística Global S.A.",
+          "inmueble_nombre": "Bodega 101",
+          "metraje": "200.00",
+          "propietario": "Rosenheimer S.A."
+        }),
+        ContratoModel.fromJson({
+          "id": "15",
+          "numero_contrato": "CTR-BODEGAS-01",
+          "fecha_inicio": "2025-01-01",
+          "fecha_fin": "2026-01-01",
+          "valor_pactado": "700.00",
+          "frecuencia_pago": "mensual",
+          "estado": "vigente",
+          "inquilino": "Logística Global S.A.",
+          "inmueble_nombre": "Bodega 102",
+          "metraje": "300.00",
+          "propietario": "Rosenheimer S.A."
+        }),
+        ContratoModel.fromJson({
+          "id": "16",
+          "numero_contrato": "CTR-LOCAL-02",
+          "fecha_inicio": "2025-02-01",
+          "fecha_fin": "2026-02-01",
+          "valor_pactado": "400.00",
+          "frecuencia_pago": "mensual",
+          "estado": "vigente",
+          "inquilino": "Cafetería Express",
+          "inmueble_nombre": "Local Comercial 1",
+          "metraje": "45.00"
+        }),
+      ];
+
+      final grouped = ContratoModel.groupContratos(rawList);
+
+      // Debe haber exactamente 2 contratos únicos (ID 15 y ID 16)
+      expect(grouped.length, equals(2));
+
+      // Contrato ID 15 consolidado
+      final c15 = grouped.firstWhere((c) => c.id == 15);
+      expect(c15.numeroContrato, equals('CTR-BODEGAS-01'));
+      expect(c15.nombresInquilino, equals('Logística Global S.A.'));
+      // Monto acumulado de las 2 bodegas: 500 + 700 = 1200
+      expect(c15.valorPactado, equals(1200.0));
+      // Metraje acumulado: 200 + 300 = 500
+      expect(c15.totalMetraje, equals(500.0));
+      // Inmuebles asociados
+      expect(c15.tieneMultiplesInmuebles, isTrue);
+      expect(c15.cantidadInmuebles, equals(2));
+      expect(c15.inmueblesAsociados[0].nombre, equals('Bodega 101'));
+      expect(c15.inmueblesAsociados[0].valor, equals(500.0));
+      expect(c15.inmueblesAsociados[1].nombre, equals('Bodega 102'));
+      expect(c15.inmueblesAsociados[1].valor, equals(700.0));
+      expect(c15.resumenInmuebles, contains('Bodega 101'));
+      expect(c15.resumenInmuebles, contains('Bodega 102'));
+
+      // Contrato ID 16 individual
+      final c16 = grouped.firstWhere((c) => c.id == 16);
+      expect(c16.valorPactado, equals(400.0));
+      expect(c16.cantidadInmuebles, equals(1));
+      expect(c16.tieneMultiplesInmuebles, isFalse);
+
+      // Verificación de conteo de contratos vigentes
+      final vigentes = grouped.where((c) => c.isVigente).length;
+      expect(vigentes, equals(2)); // 2 contratos vigentes reales, no 3 filas
+    });
+
     test('InquilinoModel calcula estado activo según contratos vigentes', () {
       final inquilinoActivo = InquilinoModel.fromJson({
         "id": 1,

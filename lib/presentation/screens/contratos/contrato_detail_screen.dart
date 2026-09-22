@@ -4,7 +4,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/contrato_model.dart';
 import '../../../logic/contratos_provider.dart';
 
-/// Detalle financiero y relacional de un Contrato (/contratos/{id}).
+/// Detalle financiero y relacional de un Contrato (/contratos/{id}) con soporte multipropiedad.
 class ContratoDetailScreen extends StatefulWidget {
   final int contratoId;
   final ContratoModel? initialContrato;
@@ -38,7 +38,11 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
     if (!mounted) return;
     setState(() {
       if (result != null) {
-        _contrato = result;
+        if (widget.initialContrato != null && widget.initialContrato!.tieneMultiplesInmuebles) {
+          _contrato = widget.initialContrato!.mergeWith(result);
+        } else {
+          _contrato = result;
+        }
       }
       _isLoading = false;
     });
@@ -61,7 +65,7 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // Tarjeta Financiera Principal
+                    // Tarjeta Financiera Principal (Monto Acumulado)
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -71,14 +75,36 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Canon de Arrendamiento',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Canon de Arrendamiento',
+                                      style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                    ),
+                                    if (item.tieneMultiplesInmuebles) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'Acumulado',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withOpacity(0.12),
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -144,8 +170,125 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Inmueble y Propietario
-                    if (item.inmuebleNombre != null && item.inmuebleNombre!.isNotEmpty) ...[
+                    // Sección de Inmuebles Asociados
+                    if (item.tieneMultiplesInmuebles) ...[
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Inmuebles Asociados (${item.cantidadInmuebles})',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '${item.cantidadInmuebles} unidades',
+                                      style: const TextStyle(
+                                        color: Color(0xFF2563EB),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              ...item.inmueblesAsociados.map((inm) {
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(Icons.warehouse_rounded, size: 18, color: Color(0xFF2563EB)),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              inm.nombre,
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${inm.metraje > 0 ? AppFormatters.area(inm.metraje) : 'Metraje N/D'}${inm.propietario != null && inm.propietario!.isNotEmpty ? ' • ${inm.propietario}' : ''}',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (inm.valor > 0)
+                                        Text(
+                                          AppFormatters.currency(inm.valor),
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF10B981),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              const Divider(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Área Total: ${AppFormatters.area(item.totalMetraje)}',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Suma: ${AppFormatters.currency(item.valorPactado)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ] else if (item.inmuebleNombre != null && item.inmuebleNombre!.isNotEmpty) ...[
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(20),

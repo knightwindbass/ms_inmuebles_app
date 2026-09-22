@@ -132,7 +132,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: badgeColor.withOpacity(0.15),
+          color: badgeColor.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -266,7 +266,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withOpacity(0.12),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.notification_important_rounded, color: Color(0xFFF59E0B), size: 22),
@@ -297,8 +297,8 @@ class _ContratosScreenState extends State<ContratosScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: provider.porVencer > 0
-                        ? const Color(0xFFF59E0B).withOpacity(0.15)
-                        : const Color(0xFF10B981).withOpacity(0.15),
+                        ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                        : const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -427,7 +427,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Inmueble y Propietario
+              // Inmueble y Propietario (Soporte Multipropropiedad Agrupada)
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -435,18 +435,41 @@ class _ContratosScreenState extends State<ContratosScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(Icons.apartment_rounded, size: 16, color: Color(0xFF64748B)),
+                    Icon(
+                      contrato.tieneMultiplesInmuebles ? Icons.domain_rounded : Icons.apartment_rounded,
+                      size: 16,
+                      color: contrato.tieneMultiplesInmuebles ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 6),
+                    if (contrato.tieneMultiplesInmuebles) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${contrato.cantidadInmuebles} inmuebles',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     Expanded(
                       child: Text(
-                        '${contrato.inmuebleNombre ?? 'Inmueble #${contrato.inmuebleId ?? ''}'}${contrato.metraje != null && contrato.metraje! > 0 ? ' • ${AppFormatters.area(contrato.metraje)}' : ''}',
+                        '${contrato.resumenInmuebles}${contrato.totalMetraje > 0 ? ' • ${AppFormatters.area(contrato.totalMetraje)}' : ''}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -484,24 +507,40 @@ class _ContratosScreenState extends State<ContratosScreen> {
                       ),
                     ],
                   ),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        AppFormatters.currency(contrato.valorPactado),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF10B981),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppFormatters.currency(contrato.valorPactado),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          Text(
+                            contrato.frecuenciaPago.toLowerCase() == 'anual' ? '/año' : '/mes',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        contrato.frecuenciaPago.toLowerCase() == 'anual' ? '/año' : '/mes',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      if (contrato.tieneMultiplesInmuebles)
+                        const Text(
+                          'Total Acumulado',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF059669),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],

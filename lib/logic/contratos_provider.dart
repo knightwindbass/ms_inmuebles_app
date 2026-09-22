@@ -25,12 +25,12 @@ class ContratosProvider extends ChangeNotifier {
   // KPIs Dinámicos Calculados en Frontend sobre los resultados
   // -------------------------------------------------------------
 
-  /// Total de contratos con estado 'vigente'
+  /// Total de contratos únicos con estado 'vigente' acorde al ID
   int get totalActivos {
     return _contratos.where((c) => c.isVigente).length;
   }
 
-  /// Ingreso Recurrente Mensual (MRR) normalizando frecuencias anuales
+  /// Ingreso Recurrente Mensual (MRR) normalizando frecuencias anuales sobre montos acumulados
   double get mrr {
     double total = 0.0;
     for (final c in _contratos) {
@@ -61,16 +61,38 @@ class ContratosProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _contratos = await _repository.getContratos(
+      final fetched = await _repository.getContratos(
         buscar: _searchQuery.isNotEmpty ? _searchQuery : null,
         orden: _selectedOrden,
       );
+      _sortContratos(fetched);
+      _contratos = fetched;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  void _sortContratos(List<ContratoModel> list) {
+    switch (_selectedOrden) {
+      case 'vencimiento_asc':
+        list.sort((a, b) => a.fechaFin.compareTo(b.fechaFin));
+        break;
+      case 'vencimiento_desc':
+        list.sort((a, b) => b.fechaFin.compareTo(a.fechaFin));
+        break;
+      case 'monto_desc':
+        list.sort((a, b) => b.valorPactado.compareTo(a.valorPactado));
+        break;
+      case 'monto_asc':
+        list.sort((a, b) => a.valorPactado.compareTo(b.valorPactado));
+        break;
+      case 'inquilino_asc':
+        list.sort((a, b) => a.nombresInquilino.toLowerCase().compareTo(b.nombresInquilino.toLowerCase()));
+        break;
     }
   }
 
@@ -84,11 +106,24 @@ class ContratosProvider extends ChangeNotifier {
     fetchContratos();
   }
 
-  Future<ContratoModel?> getDetalle(int id) async {
+  ContratoModel? findContratoById(int id) {
     try {
-      return await _repository.getContratoDetalle(id);
-    } catch (e) {
+      return _contratos.firstWhere((c) => c.id == id);
+    } catch (_) {
       return null;
+    }
+  }
+
+  Future<ContratoModel?> getDetalle(int id) async {
+    final cached = findContratoById(id);
+    try {
+      final remote = await _repository.getContratoDetalle(id);
+      if (cached != null && cached.tieneMultiplesInmuebles) {
+        return cached.mergeWith(remote);
+      }
+      return remote;
+    } catch (e) {
+      return cached;
     }
   }
 }

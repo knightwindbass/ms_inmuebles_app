@@ -79,10 +79,12 @@ class InmuebleModel {
       direccion: json['direccion']?.toString(),
       enlaceGoogleMaps: json['enlace_google_maps']?.toString() ?? json['maps_url']?.toString(),
       galeria: _toList(json['galeria']).map((e) => e.toString()).toList(),
-      contratos: _toList(json['contratos'])
-          .whereType<Map<String, dynamic>>()
-          .map((e) => ContratoModel.fromJson(e))
-          .toList(),
+      contratos: ContratoModel.groupContratos(
+        _toList(json['contratos'])
+            .whereType<Map<String, dynamic>>()
+            .map((e) => ContratoModel.fromJson(e))
+            .toList(),
+      ),
       subunidades: _toList(json['subunidades'])
           .whereType<Map<String, dynamic>>()
           .map((e) => InmuebleModel.fromJson(e))

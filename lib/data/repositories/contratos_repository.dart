@@ -30,10 +30,11 @@ class ContratosRepository {
     }
 
     if (rawList is List) {
-      return rawList
+      final parsed = rawList
           .whereType<Map>()
           .map((item) => ContratoModel.fromJson(Map<String, dynamic>.from(item)))
           .toList();
+      return ContratoModel.groupContratos(parsed);
     }
 
     return [];
@@ -42,11 +43,22 @@ class ContratosRepository {
   Future<ContratoModel> getContratoDetalle(int id) async {
     final response = await _client.get('${ApiConstants.contratos}/$id');
 
+    dynamic rawData;
     if (response is Map) {
-      final rawData = response['results'] ?? response['data'] ?? response['contrato'] ?? response;
-      if (rawData is Map) {
-        return ContratoModel.fromJson(Map<String, dynamic>.from(rawData));
-      }
+      rawData = response['results'] ?? response['data'] ?? response['contrato'] ?? response;
+    } else if (response is List) {
+      rawData = response;
+    }
+
+    if (rawData is List) {
+      final list = rawData
+          .whereType<Map>()
+          .map((item) => ContratoModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+      final grouped = ContratoModel.groupContratos(list);
+      if (grouped.isNotEmpty) return grouped.first;
+    } else if (rawData is Map) {
+      return ContratoModel.fromJson(Map<String, dynamic>.from(rawData));
     }
 
     throw Exception('No se pudo obtener el detalle del contrato');
