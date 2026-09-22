@@ -196,6 +196,7 @@ class ContratoModel {
   /// Fusiona dos registros del mismo contrato sumando cánones y agrupando inmuebles
   ContratoModel mergeWith(ContratoModel other) {
     final List<ContratoInmuebleInfo> combinedInmuebles = List.from(inmueblesAsociados);
+    bool addedAnyNew = false;
 
     void addInmueble(ContratoInmuebleInfo item) {
       final exists = combinedInmuebles.any((e) =>
@@ -204,6 +205,7 @@ class ContratoModel {
               (e.valor - item.valor).abs() < 0.01));
       if (!exists) {
         combinedInmuebles.add(item);
+        addedAnyNew = true;
       }
     }
 
@@ -221,11 +223,22 @@ class ContratoModel {
       ));
     }
 
-    final double newValorPactado = valorPactado + other.valorPactado;
+    double newValorPactado;
+    if (!addedAnyNew) {
+      newValorPactado = valorPactado > 0 ? valorPactado : other.valorPactado;
+    } else if (id > 0 && id == other.id && (valorPactado - other.valorPactado).abs() < 0.01) {
+      // Mismo contrato de BD donde cada fila del JOIN repite el canon total
+      newValorPactado = valorPactado;
+    } else {
+      newValorPactado = valorPactado + other.valorPactado;
+    }
 
     final double currentMetraje = metraje ?? 0.0;
     final double otherMetraje = other.metraje ?? 0.0;
-    final double newMetraje = (currentMetraje + otherMetraje) > 0 ? (currentMetraje + otherMetraje) : 0.0;
+    final double sumInmMetraje = combinedInmuebles.fold(0.0, (acc, item) => acc + item.metraje);
+    final double newMetraje = sumInmMetraje > 0
+        ? sumInmMetraje
+        : ((currentMetraje + otherMetraje) > 0 ? (currentMetraje + otherMetraje) : 0.0);
 
     final String? bestNumero = (numeroContrato != null && numeroContrato!.isNotEmpty)
         ? numeroContrato

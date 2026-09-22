@@ -38,11 +38,7 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
     if (!mounted) return;
     setState(() {
       if (result != null) {
-        if (widget.initialContrato != null && widget.initialContrato!.tieneMultiplesInmuebles) {
-          _contrato = widget.initialContrato!.mergeWith(result);
-        } else {
-          _contrato = result;
-        }
+        _contrato = result;
       }
       _isLoading = false;
     });

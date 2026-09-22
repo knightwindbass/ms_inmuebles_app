@@ -157,37 +157,80 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
             ),
           ),
 
-          // Contador de resultados e indicador de modo
+          // Resumen Rápido de Auditoría y Contador de Resultados
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    provider.hasFilters
-                        ? '${provider.inmuebles.length} resultados (Búsqueda activa)'
-                        : '${provider.topLevelInmuebles.length} propiedades principales (${provider.inmuebles.length} total)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            provider.hasFilters
+                                ? '${provider.inmuebles.length} inmuebles'
+                                : '${provider.topLevelInmuebles.length} matrices • ${provider.inmuebles.length} total',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Área: ${AppFormatters.area(provider.totalAreaAudit)}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                        ),
+                        if (provider.totalRentaRentados > 0) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Renta: ${AppFormatters.currency(provider.totalRentaRentados)}',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (provider.hasFilters)
-                  GestureDetector(
-                    onTap: () => provider.clearFilters(),
-                    child: const Text(
-                      'Limpiar filtros',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF2563EB),
-                      ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                    onPressed: () => provider.clearFilters(),
+                    child: const Text('Limpiar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
               ],
             ),
@@ -271,8 +314,11 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
     if (provider.hasFilters) {
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: provider.inmuebles.length,
+        itemCount: provider.inmuebles.length + 1,
         itemBuilder: (context, index) {
+          if (index == provider.inmuebles.length) {
+            return _buildAuditTotalsCard(provider, isDark);
+          }
           final inmueble = provider.inmuebles[index];
           return _buildInmuebleCard(inmueble, isDark);
         },
@@ -285,8 +331,11 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: topLevel.length,
+      itemCount: topLevel.length + 1,
       itemBuilder: (context, index) {
+        if (index == topLevel.length) {
+          return _buildAuditTotalsCard(provider, isDark);
+        }
         final parent = topLevel[index];
         final children = childrenMap[parent.id] ?? [];
 
@@ -310,7 +359,7 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withOpacity(0.1),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -362,7 +411,7 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
         ),
         children: [
           Container(
-            color: isDark ? const Color(0xFF0F172A).withOpacity(0.5) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +548,7 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB).withOpacity(0.1),
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -609,6 +658,265 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Tarjeta de Auditoría de Totales al final de la lista de inmuebles
+  Widget _buildAuditTotalsCard(InmueblesProvider provider, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 28),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header de la Tarjeta
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF2563EB).withValues(alpha: 0.15)
+                  : const Color(0xFFEFF6FF),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.calculate_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Totales de Auditoría',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      Text(
+                        provider.hasFilters
+                            ? provider.resumenFiltrosActivos
+                            : 'Portafolio Completo (${provider.inmuebles.length} registros)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    '${provider.inmuebles.length} uds',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Cuerpo de Métricas
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildAuditRow(
+                  label: 'Área Total Listada',
+                  value: AppFormatters.area(provider.totalAreaAudit),
+                  subtitle: (!provider.hasFilters && provider.totalAreaFilasBrutas != provider.totalAreaAudit)
+                      ? 'Área bruta en filas: ${AppFormatters.area(provider.totalAreaFilasBrutas)}'
+                      : null,
+                  icon: Icons.square_foot,
+                  iconColor: const Color(0xFF2563EB),
+                  isDark: isDark,
+                  isBold: true,
+                ),
+                const Divider(height: 18),
+                _buildAuditRow(
+                  label: 'Renta Mensual (Rentados)',
+                  value: AppFormatters.currency(provider.totalRentaRentados),
+                  subtitle: '${provider.totalRentados} inmuebles con contrato activo',
+                  icon: Icons.monetization_on_outlined,
+                  iconColor: const Color(0xFF10B981),
+                  valueColor: const Color(0xFF10B981),
+                  isDark: isDark,
+                  isBold: true,
+                ),
+                const Divider(height: 18),
+                _buildAuditRow(
+                  label: r'Rendimiento Promedio $/m²',
+                  value: '${AppFormatters.currency(provider.valorPromedioM2Audit)}/m²',
+                  subtitle: 'Sobre ${AppFormatters.area(provider.areaRentadaAudit)} rentados',
+                  icon: Icons.trending_up,
+                  iconColor: const Color(0xFF8B5CF6),
+                  isDark: isDark,
+                ),
+                const Divider(height: 18),
+                _buildAuditRow(
+                  label: 'Canon Base Potencial (Total)',
+                  value: AppFormatters.currency(provider.totalRentaBasePortafolio),
+                  subtitle: 'Suma cánones de rentados + disponibles',
+                  icon: Icons.account_balance_wallet_outlined,
+                  iconColor: const Color(0xFFF59E0B),
+                  isDark: isDark,
+                ),
+                const Divider(height: 18),
+                // Conteo de Estados
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildAuditStateChip(
+                      label: 'Rentados',
+                      count: provider.totalRentados,
+                      color: const Color(0xFF10B981),
+                      isDark: isDark,
+                    ),
+                    _buildAuditStateChip(
+                      label: 'Disponibles',
+                      count: provider.totalDisponibles,
+                      color: const Color(0xFF3B82F6),
+                      isDark: isDark,
+                    ),
+                    if (provider.totalOtrosEstados > 0)
+                      _buildAuditStateChip(
+                        label: 'Otros',
+                        count: provider.totalOtrosEstados,
+                        color: const Color(0xFF6B7280),
+                        isDark: isDark,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuditRow({
+    required String label,
+    required String value,
+    String? subtitle,
+    required IconData icon,
+    required Color iconColor,
+    Color? valueColor,
+    required bool isDark,
+    bool isBold = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: iconColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                  fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isBold ? 14 : 13,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+            color: valueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuditStateChip({
+    required String label,
+    required int count,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $count',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

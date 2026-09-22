@@ -68,6 +68,70 @@ class InmueblesProvider extends ChangeNotifier {
     return map;
   }
 
+  // -------------------------------------------------------------
+  // Métricas y Totales de Auditoría para Cuadre Financiero
+  // -------------------------------------------------------------
+
+  /// Conteo de inmuebles en estado 'rentado' en la lista actual
+  int get totalRentados => _inmuebles.where((i) => i.isRentado).length;
+
+  /// Conteo de inmuebles en estado 'disponible' en la lista actual
+  int get totalDisponibles => _inmuebles.where((i) => i.isDisponible).length;
+
+  /// Conteo de inmuebles en otros estados (mantenimiento / inactivo)
+  int get totalOtrosEstados => _inmuebles.where((i) => !i.isRentado && !i.isDisponible).length;
+
+  /// Suma de área total (m²) de la lista actual.
+  /// Si no hay filtros, calcula sobre unidades leasables para evitar duplicar matrices complejas.
+  double get totalAreaAudit {
+    if (hasFilters) {
+      return _inmuebles.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+    }
+    final parentIds = _inmuebles
+        .map((e) => e.propiedadPadreId)
+        .where((id) => id != null && id > 0)
+        .toSet();
+    final leasables = _inmuebles.where((e) => !parentIds.contains(e.id));
+    return leasables.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+  }
+
+  /// Suma total de m² de todas las filas individuales sin excluir matrices
+  double get totalAreaFilasBrutas {
+    return _inmuebles.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+  }
+
+  /// Suma total del valor de renta de los inmuebles rentados en la lista actual
+  double get totalRentaRentados {
+    return _inmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + i.valorRentaBase);
+  }
+
+  /// Suma total de cánones base de todos los inmuebles de la lista actual (rentados + disponibles)
+  double get totalRentaBasePortafolio {
+    return _inmuebles.fold(0.0, (sum, i) => sum + i.valorRentaBase);
+  }
+
+  /// Área total de los inmuebles rentados (para cálculo de $/m² de auditoría)
+  double get areaRentadaAudit {
+    return _inmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+  }
+
+  /// Valor promedio ponderado $/m² de los inmuebles rentados
+  double get valorPromedioM2Audit {
+    final area = areaRentadaAudit;
+    final renta = totalRentaRentados;
+    return area > 0 ? (renta / area) : 0.0;
+  }
+
+  /// Resumen textual de los filtros aplicados
+  String get resumenFiltrosActivos {
+    final List<String> parts = [];
+    if (_searchQuery.isNotEmpty) parts.add('Búsqueda: "$_searchQuery"');
+    if (_selectedEstado != null && _selectedEstado!.isNotEmpty) parts.add('Estado: $_selectedEstado');
+    if (_selectedTipo != null && _selectedTipo!.isNotEmpty) parts.add('Tipo: $_selectedTipo');
+    if (_selectedPropietario != null && _selectedPropietario!.isNotEmpty) parts.add('Prop: $_selectedPropietario');
+    return parts.isEmpty ? 'Sin filtros' : parts.join(' • ');
+  }
+
   Future<void> fetchInmuebles() async {
     _isLoading = true;
     _errorMessage = null;

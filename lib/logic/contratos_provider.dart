@@ -118,8 +118,23 @@ class ContratosProvider extends ChangeNotifier {
     final cached = findContratoById(id);
     try {
       final remote = await _repository.getContratoDetalle(id);
-      if (cached != null && cached.tieneMultiplesInmuebles) {
-        return cached.mergeWith(remote);
+      if (cached != null) {
+        // Enriquecer el detalle remoto con los inmuebles consolidados en caché si los hubiera,
+        // preservando el canon exacto sin duplicar la suma sobre sí mismo.
+        final List<ContratoInmuebleInfo> effectiveInmuebles =
+            (cached.tieneMultiplesInmuebles && remote.inmueblesAsociados.length < cached.inmueblesAsociados.length)
+                ? cached.inmueblesAsociados
+                : remote.inmueblesAsociados;
+
+        final double effectiveValor = cached.valorPactado > 0 ? cached.valorPactado : remote.valorPactado;
+
+        return remote.copyWith(
+          valorPactado: effectiveValor,
+          inmueblesAsociados: effectiveInmuebles,
+          metraje: (cached.totalMetraje > 0 && (remote.metraje == null || remote.metraje == 0))
+              ? cached.totalMetraje
+              : remote.metraje,
+        );
       }
       return remote;
     } catch (e) {

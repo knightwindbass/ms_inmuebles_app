@@ -4,6 +4,9 @@ import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
 import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
 import 'package:ms_inmuebles_app/data/models/inquilino_model.dart';
 import 'package:ms_inmuebles_app/data/models/tenant_perfil_model.dart';
+import 'package:ms_inmuebles_app/data/models/inmueble_model.dart';
+import 'package:ms_inmuebles_app/data/repositories/inmuebles_repository.dart';
+import 'package:ms_inmuebles_app/logic/inmuebles_provider.dart';
 import 'package:ms_inmuebles_app/presentation/screens/setup/qr_scanner_screen.dart';
 
 void main() {
@@ -331,5 +334,118 @@ void main() {
       expect(model.rentabilidadUbicacion[1].total, equals(165000.00));
       expect(model.rentabilidadUbicacion[1].promedioM2, equals(12.50));
     });
+
+    test('ContratoModel mergeWith preserva el canon exacto sin triplicarlo al consultar detalle o unir filas', () {
+      final itemPrincipal = ContratoModel(
+        id: 1789754440,
+        numeroContrato: 'C-1789754440',
+        fechaInicio: '2025-01-01',
+        fechaFin: '2026-01-01',
+        valorPactado: 25122.10,
+        nombresInquilino: 'DinatekPower S.A.',
+        inmueblesAsociados: [
+          ContratoInmuebleInfo(
+            nombre: 'Multiparque – Taller / Oficina Dinatek',
+            valor: 25122.10,
+            metraje: 5024.52,
+          ),
+        ],
+      );
+
+      final filaSecundaria = ContratoModel(
+        id: 1789754440,
+        numeroContrato: 'C-1789754440',
+        fechaInicio: '2025-01-01',
+        fechaFin: '2026-01-01',
+        valorPactado: 25122.10, // En JOIN de BD se repite el canon del contrato
+        nombresInquilino: 'DinatekPower S.A.',
+        inmueblesAsociados: [
+          ContratoInmuebleInfo(
+            nombre: 'Multiparque – Bodega 01',
+            valor: 0.0,
+            metraje: 0.0,
+          ),
+        ],
+      );
+
+      // Primer merge: agrupa las dos propiedades
+      final consolidado = itemPrincipal.mergeWith(filaSecundaria);
+      expect(consolidado.inmueblesAsociados.length, equals(2));
+      // El canon NO debe ser 50,244.20, debe mantenerse en 25,122.10
+      expect(consolidado.valorPactado, equals(25122.10));
+
+      // Segundo merge simulado (ej. getDetalle remoto)
+      final conDetalleRemoto = consolidado.mergeWith(itemPrincipal);
+      expect(conDetalleRemoto.inmueblesAsociados.length, equals(2));
+      // El canon NO debe triplicarse a 75,366.30
+      expect(conDetalleRemoto.valorPactado, equals(25122.10));
+    });
+
+    test('InmueblesProvider calcula correctamente métricas de auditoría en portafolio y filtros', () async {
+      final fakeData = [
+        // Complejo matriz (id 1)
+        InmuebleModel(
+          id: 1,
+          nombre: 'Multiparque Matriz',
+          tipo: 'Edificio',
+          estado: 'rentado',
+          metraje: 15000.0,
+          valorRentaBase: 75000.0,
+        ),
+        // Sub-unidad 1 (rentada)
+        InmuebleModel(
+          id: 2,
+          propiedadPadreId: 1,
+          nombre: 'Bodega 1',
+          tipo: 'Bodega',
+          estado: 'rentado',
+          metraje: 5000.0,
+          valorRentaBase: 25000.0,
+        ),
+        // Sub-unidad 2 (disponible)
+        InmuebleModel(
+          id: 3,
+          propiedadPadreId: 1,
+          nombre: 'Bodega 2',
+          tipo: 'Bodega',
+          estado: 'disponible',
+          metraje: 10000.0,
+          valorRentaBase: 50000.0,
+        ),
+      ];
+
+      final repo = _FakeInmueblesRepository(fakeData);
+      final provider = InmueblesProvider(repo);
+      await provider.fetchInmuebles();
+
+      // En modo sin filtros, totalAreaAudit excluye las matrices complejas para evitar duplicar
+      expect(provider.topLevelInmuebles.length, equals(1));
+      expect(provider.totalRentados, equals(2));
+      expect(provider.totalDisponibles, equals(1));
+      expect(provider.totalAreaAudit, equals(15000.0)); // 5000 + 10000 (excluye id 1 que es padre)
+      expect(provider.totalAreaFilasBrutas, equals(30000.0)); // 15000 + 5000 + 10000
+      expect(provider.totalRentaRentados, equals(100000.0)); // 75000 + 25000
+      expect(provider.totalRentaBasePortafolio, equals(150000.0)); // 75000 + 25000 + 50000
+    });
   });
+}
+
+class _FakeInmueblesRepository implements InmueblesRepository {
+  final List<InmuebleModel> mockList;
+  _FakeInmueblesRepository(this.mockList);
+
+  @override
+  Future<List<InmuebleModel>> getInmuebles({
+    String? estado,
+    String? tipo,
+    String? buscar,
+    String? propietario,
+    int? padreId,
+    String? orden,
+  }) async {
+    return mockList;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
