@@ -463,6 +463,65 @@ void main() {
       expect(consolidado.valorPactado, equals(1000.0));
       expect(consolidado.totalMetraje, equals(200.0));
     });
+
+    test('ContratoModel parsea inquilino_id y permite consolidar contratos por inquilino', () {
+      final jsonContrato1 = {
+        'id': '101',
+        'numero_contrato': 'CTR-INQ-1',
+        'inquilino_id': '45',
+        'inquilino': 'Distribuidora Global S.A.',
+        'identificacion': '0999999999001',
+        'inmueble_nombre': 'Bodega Central',
+        'valor_pactado': '3200.00',
+        'frecuencia_pago': 'mensual',
+        'estado': 'vigente',
+        'metraje': '500.0',
+        'fecha_inicio': '2025-01-01',
+        'fecha_fin': '2026-01-01',
+      };
+
+      final jsonContrato2 = {
+        'id': '102',
+        'numero_contrato': 'CTR-INQ-2',
+        'inquilino_id': '45',
+        'inquilino': 'Distribuidora Global S.A.',
+        'identificacion': '0999999999001',
+        'inmueble_nombre': 'Oficina 301',
+        'valor_pactado': '800.00',
+        'frecuencia_pago': 'mensual',
+        'estado': 'vigente',
+        'metraje': '80.0',
+        'fecha_inicio': '2025-01-01',
+        'fecha_fin': '2026-01-01',
+      };
+
+      final c1 = ContratoModel.fromJson(jsonContrato1);
+      final c2 = ContratoModel.fromJson(jsonContrato2);
+
+      expect(c1.inquilinoId, equals(45));
+      expect(c2.inquilinoId, equals(45));
+
+      final inquilino = InquilinoModel(
+        id: 45,
+        identificacion: '0999999999001',
+        nombresRazonSocial: 'Distribuidora Global S.A.',
+        contratosVigentes: 2,
+      );
+
+      final listaContratos = [c1, c2];
+      final matched = listaContratos.where((c) =>
+          c.inquilinoId == inquilino.id ||
+          c.identificacionInquilino == inquilino.identificacion ||
+          c.nombresInquilino.toLowerCase() == inquilino.nombresRazonSocial.toLowerCase()
+      ).toList();
+
+      expect(matched.length, equals(2));
+      final totalMRR = matched.fold(0.0, (acc, c) => acc + c.valorMensualizado);
+      final totalArea = matched.fold(0.0, (acc, c) => acc + c.totalMetraje);
+
+      expect(totalMRR, equals(4000.0));
+      expect(totalArea, equals(580.0));
+    });
   });
 }
 

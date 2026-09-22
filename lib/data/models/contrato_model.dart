@@ -65,6 +65,7 @@ class ContratoModel {
   final String estado;
   final String nombresInquilino;
   final String? identificacionInquilino;
+  final int? inquilinoId;
   final String? inmuebleNombre;
   final int? inmuebleId;
   final double? metraje;
@@ -85,6 +86,7 @@ class ContratoModel {
     this.estado = 'vigente',
     required this.nombresInquilino,
     this.identificacionInquilino,
+    this.inquilinoId,
     this.inmuebleNombre,
     this.inmuebleId,
     this.metraje,
@@ -126,6 +128,9 @@ class ContratoModel {
     return metraje ?? 0.0;
   }
 
+  /// Alias de metraje total para compatibilidad
+  double get metrajeTotal => totalMetraje;
+
   /// Cálculo de los días restantes hasta la fecha de fin
   int get diasRestantes {
     if (fechaFin.isEmpty) return 0;
@@ -156,6 +161,7 @@ class ContratoModel {
     String? estado,
     String? nombresInquilino,
     String? identificacionInquilino,
+    int? inquilinoId,
     String? inmuebleNombre,
     int? inmuebleId,
     double? metraje,
@@ -184,6 +190,7 @@ class ContratoModel {
       estado: estado ?? this.estado,
       nombresInquilino: nombresInquilino ?? this.nombresInquilino,
       identificacionInquilino: identificacionInquilino ?? this.identificacionInquilino,
+      inquilinoId: inquilinoId ?? this.inquilinoId,
       inmuebleNombre: effectiveInmuebleNombre,
       inmuebleId: inmuebleId ?? this.inmuebleId,
       metraje: metraje ?? this.metraje,
@@ -264,6 +271,10 @@ class ContratoModel {
         ? propietario
         : other.propietario;
 
+    final int? bestInqId = (inquilinoId != null && inquilinoId != 0)
+        ? inquilinoId
+        : other.inquilinoId;
+
     final String bestEstado = (isVigente || other.isVigente) ? 'vigente' : estado;
 
     return copyWith(
@@ -273,6 +284,7 @@ class ContratoModel {
       estado: bestEstado,
       nombresInquilino: bestInq,
       identificacionInquilino: bestIden,
+      inquilinoId: bestInqId,
       emailInquilino: bestEmail,
       telefonoInquilino: bestTel,
       propietario: bestProp,
@@ -370,6 +382,11 @@ class ContratoModel {
     final parsedMonto = _toDouble(json['valor_pactado'] ?? json['monto'] ?? json['canon'] ?? json['renta']);
     final parsedMetraje = json['metraje'] != null ? _toDouble(json['metraje']) : null;
     final parsedInmuebleId = json['inmueble_id'] != null ? _toInt(json['inmueble_id']) : null;
+    final parsedInquilinoId = json['inquilino_id'] != null
+        ? _toInt(json['inquilino_id'])
+        : (json['inquilino'] is Map && json['inquilino']['id'] != null
+            ? _toInt(json['inquilino']['id'])
+            : null);
 
     final List<ContratoInmuebleInfo> itemsAsociados = [];
     final rawInmuebles = json['inmuebles'] ?? json['propiedades'] ?? json['unidades'];
@@ -403,6 +420,7 @@ class ContratoModel {
       estado: json['estado']?.toString().toLowerCase() ?? 'vigente',
       nombresInquilino: inquilinoName,
       identificacionInquilino: inqIden,
+      inquilinoId: parsedInquilinoId,
       inmuebleNombre: inmName,
       inmuebleId: parsedInmuebleId,
       metraje: parsedMetraje,
@@ -425,6 +443,7 @@ class ContratoModel {
       'frecuencia_pago': frecuenciaPago,
       'estado': estado,
       'inquilino': nombresInquilino,
+      if (inquilinoId != null) 'inquilino_id': inquilinoId,
       if (inmuebleNombre != null) 'inmueble_nombre': inmuebleNombre,
       if (inmuebleId != null) 'inmueble_id': inmuebleId,
       if (metraje != null) 'metraje': metraje,

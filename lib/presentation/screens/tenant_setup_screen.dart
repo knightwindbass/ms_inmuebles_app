@@ -19,6 +19,7 @@ class _TenantSetupScreenState extends State<TenantSetupScreen> {
   late final TextEditingController _apiKeyController;
   late final TextEditingController _tenantIdController;
   bool _obscureApiKey = true;
+  bool _showManualEntry = false;
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _TenantSetupScreenState extends State<TenantSetupScreen> {
 
     if (result != null && mounted) {
       setState(() {
+        _showManualEntry = true;
         _baseUrlController.text = result.apiUrl;
         _apiKeyController.text = result.apiKey;
         _tenantIdController.text = result.tenantId;
@@ -95,12 +97,6 @@ class _TenantSetupScreenState extends State<TenantSetupScreen> {
         ),
       );
     }
-  }
-
-  void _fillDemoCredentials() {
-    _baseUrlController.text = 'https://api.metasociedad.com/wp-json/msinm/v1';
-    _apiKeyController.text = 'VBamcjz4FfHBxxAFq2HqNYWBTu2piIoNBZDoHfXY';
-    _tenantIdController.text = 'MS-001';
   }
 
   @override
@@ -174,159 +170,204 @@ class _TenantSetupScreenState extends State<TenantSetupScreen> {
                         backgroundColor: const Color(0xFF2563EB).withOpacity(0.06),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Separador O
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'O INGRESO MANUAL',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                              letterSpacing: 0.5,
+                    if (!_showManualEntry) ...[
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _showManualEntry = true;
+                          });
+                        },
+                        icon: const Icon(Icons.login_rounded, size: 20, color: Color(0xFF2563EB)),
+                        label: const Text(
+                          'Ingresa tus credenciales para conexión',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(
+                            color: const Color(0xFF2563EB).withOpacity(0.35),
+                            width: 1.4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B).withOpacity(0.5) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.edit_note_rounded, size: 20, color: Color(0xFF2563EB)),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Credenciales de Conexión',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                IconButton(
+                                  tooltip: 'Cerrar ingreso manual',
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _showManualEntry = false;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
+                            const SizedBox(height: 16),
 
-                    // Base URL
-                    Text(
-                      'Servidor Central (Base URL)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _baseUrlController,
-                      decoration: const InputDecoration(
-                        hintText: 'https://api.metasociedad.com/wp-json/msinm/v1',
-                        prefixIcon: Icon(Icons.link_rounded, size: 20),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Ingresa la URL del servidor';
-                        }
-                        if (!val.startsWith('http')) {
-                          return 'La URL debe iniciar con https:// o http://';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Tenant ID
-                    Text(
-                      'Tenant ID (x-tenant-id)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _tenantIdController,
-                      decoration: const InputDecoration(
-                        hintText: 'ej: MS-001',
-                        prefixIcon: Icon(Icons.business_rounded, size: 20),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'El Tenant ID es obligatorio';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // API Key
-                    Text(
-                      'API Key Secreta (x-api-key)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _apiKeyController,
-                      obscureText: _obscureApiKey,
-                      decoration: InputDecoration(
-                        hintText: 'Ingresa tu x-api-key',
-                        prefixIcon: const Icon(Icons.key_rounded, size: 20),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureApiKey ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureApiKey = !_obscureApiKey;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'El API Key es obligatorio';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Botón Conectar
-                    ElevatedButton(
-                      onPressed: auth.isTestingConnection ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: auth.isTestingConnection
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Validar y Conectar',
+                            // Base URL
+                            Text(
+                              'Servidor Central (Base URL)',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
-                    ),
-                    const SizedBox(height: 12),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _baseUrlController,
+                              decoration: const InputDecoration(
+                                hintText: 'https://api.metasociedad.com/wp-json/msinm/v1',
+                                prefixIcon: Icon(Icons.link_rounded, size: 20),
+                              ),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'Ingresa la URL del servidor';
+                                }
+                                if (!val.startsWith('http')) {
+                                  return 'La URL debe iniciar con https:// o http://';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
 
-                    // Botón de ejemplo demo
-                    TextButton.icon(
-                      onPressed: _fillDemoCredentials,
-                      icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-                      label: const Text('Rellenar credenciales de demostración'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            // Tenant ID
+                            Text(
+                              'Tenant ID (x-tenant-id)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _tenantIdController,
+                              decoration: const InputDecoration(
+                                hintText: 'ej: MS-001',
+                                prefixIcon: Icon(Icons.business_rounded, size: 20),
+                              ),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'El Tenant ID es obligatorio';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // API Key
+                            Text(
+                              'API Key Secreta (x-api-key)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _apiKeyController,
+                              obscureText: _obscureApiKey,
+                              decoration: InputDecoration(
+                                hintText: 'Ingresa tu x-api-key',
+                                prefixIcon: const Icon(Icons.key_rounded, size: 20),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureApiKey ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureApiKey = !_obscureApiKey;
+                                    });
+                                  },
+                                ),
+                              ),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'El API Key es obligatorio';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Botón Conectar
+                            ElevatedButton(
+                              onPressed: auth.isTestingConnection ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: auth.isTestingConnection
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Validar y Conectar',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
