@@ -72,27 +72,32 @@ class InmueblesProvider extends ChangeNotifier {
   // Métricas y Totales de Auditoría para Cuadre Financiero
   // -------------------------------------------------------------
 
-  /// Conteo de inmuebles en estado 'rentado' en la lista actual
-  int get totalRentados => _inmuebles.where((i) => i.isRentado).length;
+  /// IDs de complejos matrices que tienen sub-unidades hijas presentes en la lista
+  Set<int> get parentIdsWithChildren => _inmuebles
+      .map((e) => e.propiedadPadreId)
+      .where((id) => id != null && id > 0)
+      .cast<int>()
+      .toSet();
 
-  /// Conteo de inmuebles en estado 'disponible' en la lista actual
-  int get totalDisponibles => _inmuebles.where((i) => i.isDisponible).length;
+  /// Unidades leasables efectivas (excluye matrices cuyos hijos están en la lista para no duplicar metraje ni renta)
+  List<InmuebleModel> get leasableInmuebles {
+    final parentIds = parentIdsWithChildren;
+    if (parentIds.isEmpty) return _inmuebles;
+    return _inmuebles.where((e) => !parentIds.contains(e.id)).toList();
+  }
+
+  /// Conteo de inmuebles rentados leasables
+  int get totalRentados => leasableInmuebles.where((i) => i.isRentado).length;
+
+  /// Conteo de inmuebles disponibles leasables
+  int get totalDisponibles => leasableInmuebles.where((i) => i.isDisponible).length;
 
   /// Conteo de inmuebles en otros estados (mantenimiento / inactivo)
-  int get totalOtrosEstados => _inmuebles.where((i) => !i.isRentado && !i.isDisponible).length;
+  int get totalOtrosEstados => leasableInmuebles.where((i) => !i.isRentado && !i.isDisponible).length;
 
-  /// Suma de área total (m²) de la lista actual.
-  /// Si no hay filtros, calcula sobre unidades leasables para evitar duplicar matrices complejas.
+  /// Suma de área total (m²) de unidades leasables efectivas
   double get totalAreaAudit {
-    if (hasFilters) {
-      return _inmuebles.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
-    }
-    final parentIds = _inmuebles
-        .map((e) => e.propiedadPadreId)
-        .where((id) => id != null && id > 0)
-        .toSet();
-    final leasables = _inmuebles.where((e) => !parentIds.contains(e.id));
-    return leasables.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+    return leasableInmuebles.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
   }
 
   /// Suma total de m² de todas las filas individuales sin excluir matrices
@@ -100,19 +105,24 @@ class InmueblesProvider extends ChangeNotifier {
     return _inmuebles.fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
   }
 
-  /// Suma total del valor de renta de los inmuebles rentados en la lista actual
+  /// Suma total del valor de renta de los inmuebles rentados (excluyendo matrices padre para no duplicar)
   double get totalRentaRentados {
+    return leasableInmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + i.valorRentaBase);
+  }
+
+  /// Suma bruta del valor de renta de todas las filas con estado rentado (para auditoría vs Excel)
+  double get totalRentaFilasBrutas {
     return _inmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + i.valorRentaBase);
   }
 
-  /// Suma total de cánones base de todos los inmuebles de la lista actual (rentados + disponibles)
+  /// Suma total de cánones base de todos los inmuebles leasables (rentados + disponibles)
   double get totalRentaBasePortafolio {
-    return _inmuebles.fold(0.0, (sum, i) => sum + i.valorRentaBase);
+    return leasableInmuebles.fold(0.0, (sum, i) => sum + i.valorRentaBase);
   }
 
   /// Área total de los inmuebles rentados (para cálculo de $/m² de auditoría)
   double get areaRentadaAudit {
-    return _inmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
+    return leasableInmuebles.where((i) => i.isRentado).fold(0.0, (sum, i) => sum + (i.metraje ?? 0.0));
   }
 
   /// Valor promedio ponderado $/m² de los inmuebles rentados

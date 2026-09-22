@@ -776,7 +776,9 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
                 _buildAuditRow(
                   label: 'Renta Mensual (Rentados)',
                   value: AppFormatters.currency(provider.totalRentaRentados),
-                  subtitle: '${provider.totalRentados} inmuebles con contrato activo',
+                  subtitle: (provider.totalRentaFilasBrutas != provider.totalRentaRentados)
+                      ? '${provider.totalRentados} leasables • Renta bruta en filas: ${AppFormatters.currency(provider.totalRentaFilasBrutas)}'
+                      : '${provider.totalRentados} inmuebles con contrato activo',
                   icon: Icons.monetization_on_outlined,
                   iconColor: const Color(0xFF10B981),
                   valueColor: const Color(0xFF10B981),

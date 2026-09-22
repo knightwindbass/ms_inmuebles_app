@@ -418,14 +418,50 @@ void main() {
       final provider = InmueblesProvider(repo);
       await provider.fetchInmuebles();
 
-      // En modo sin filtros, totalAreaAudit excluye las matrices complejas para evitar duplicar
+      // En modo sin filtros, totalAreaAudit y totalRentaRentados excluyen matrices para evitar duplicar
       expect(provider.topLevelInmuebles.length, equals(1));
-      expect(provider.totalRentados, equals(2));
-      expect(provider.totalDisponibles, equals(1));
+      expect(provider.totalRentados, equals(1)); // Solo Bodega 1 leasable
+      expect(provider.totalDisponibles, equals(1)); // Bodega 2 leasable
       expect(provider.totalAreaAudit, equals(15000.0)); // 5000 + 10000 (excluye id 1 que es padre)
       expect(provider.totalAreaFilasBrutas, equals(30000.0)); // 15000 + 5000 + 10000
-      expect(provider.totalRentaRentados, equals(100000.0)); // 75000 + 25000
-      expect(provider.totalRentaBasePortafolio, equals(150000.0)); // 75000 + 25000 + 50000
+      expect(provider.totalRentaRentados, equals(25000.0)); // Solo unidades leasables (no duplica matriz de 75000)
+      expect(provider.totalRentaFilasBrutas, equals(100000.0)); // Bruto en filas: 75000 + 25000
+      expect(provider.totalRentaBasePortafolio, equals(75000.0)); // 25000 + 50000
+    });
+
+    test('ContratoModel agrupa múltiples bodegas con el mismo canon sin ignorarlas y reconoce estado activo/vigente', () {
+      final item1 = ContratoModel(
+        id: 99,
+        numeroContrato: 'CTR-SAME-PRICE',
+        fechaInicio: '2025-01-01',
+        fechaFin: '2026-01-01',
+        valorPactado: 500.0,
+        estado: 'activo',
+        nombresInquilino: 'Comercial ABC',
+        inmueblesAsociados: [
+          ContratoInmuebleInfo(inmuebleId: 101, nombre: 'Bodega Norte 1', valor: 500.0, metraje: 100.0),
+        ],
+      );
+
+      final item2 = ContratoModel(
+        id: 99,
+        numeroContrato: 'CTR-SAME-PRICE',
+        fechaInicio: '2025-01-01',
+        fechaFin: '2026-01-01',
+        valorPactado: 500.0, // Mismo valor que item1
+        estado: 'vigente',
+        nombresInquilino: 'Comercial ABC',
+        inmueblesAsociados: [
+          ContratoInmuebleInfo(inmuebleId: 102, nombre: 'Bodega Norte 2', valor: 500.0, metraje: 100.0),
+        ],
+      );
+
+      final consolidado = item1.mergeWith(item2);
+      expect(consolidado.isVigente, isTrue);
+      expect(consolidado.cantidadInmuebles, equals(2));
+      // Debe sumar 500 + 500 = 1000
+      expect(consolidado.valorPactado, equals(1000.0));
+      expect(consolidado.totalMetraje, equals(200.0));
     });
   });
 }

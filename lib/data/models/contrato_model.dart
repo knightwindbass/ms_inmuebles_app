@@ -96,7 +96,10 @@ class ContratoModel {
     this.inmueblesAsociados = const [],
   });
 
-  bool get isVigente => estado.toLowerCase() == 'vigente';
+  bool get isVigente {
+    final clean = estado.trim().toLowerCase();
+    return clean == 'vigente' || clean == 'activo' || clean == 'activa';
+  }
 
   /// Cantidad de unidades o inmuebles bajo este contrato
   int get cantidadInmuebles => inmueblesAsociados.isNotEmpty
@@ -223,15 +226,12 @@ class ContratoModel {
       ));
     }
 
-    double newValorPactado;
-    if (!addedAnyNew) {
-      newValorPactado = valorPactado > 0 ? valorPactado : other.valorPactado;
-    } else if (id > 0 && id == other.id && (valorPactado - other.valorPactado).abs() < 0.01) {
-      // Mismo contrato de BD donde cada fila del JOIN repite el canon total
-      newValorPactado = valorPactado;
-    } else {
-      newValorPactado = valorPactado + other.valorPactado;
-    }
+    final double sumInmueblesValor = combinedInmuebles.fold(0.0, (acc, item) => acc + item.valor);
+    final double newValorPactado = sumInmueblesValor > 0
+        ? sumInmueblesValor
+        : (!addedAnyNew
+            ? (valorPactado > 0 ? valorPactado : other.valorPactado)
+            : (valorPactado + other.valorPactado));
 
     final double currentMetraje = metraje ?? 0.0;
     final double otherMetraje = other.metraje ?? 0.0;
