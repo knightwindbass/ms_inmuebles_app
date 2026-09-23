@@ -570,6 +570,19 @@ void main() {
       expect(InmuebleModel.normalizeTipo('terreno'), equals('Terreno'));
       expect(InmuebleModel.normalizeTipo('TERRENO'), equals('Terreno'));
     });
+
+    test('DashboardKpiModel calcula exactamente la Renta Anual Proyectada (displayRentaAnual)', () {
+      final model = DashboardKpiModel(
+        inmuebles: InmueblesDesglose(total: 10),
+        jerarquia: JerarquiaDesglose(),
+        tasaOcupacion: 95.0,
+        ingresosMensualesProyectados: 25000.0,
+        distribucionTiposEstado: [],
+      );
+
+      expect(model.displayRentaMensual, equals(25000.0));
+      expect(model.displayRentaAnual, equals(300000.0)); // 25,000 * 12
+    });
   });
 }
 

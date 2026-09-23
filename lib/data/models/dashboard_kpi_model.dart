@@ -52,6 +52,7 @@ class DashboardKpiModel {
 
   // Getters inteligentes calculados dinámicamente según la realidad del portafolio
   double get displayRentaMensual => rentaMensualBase ?? (ingresosMensualesProyectados > 0 ? ingresosMensualesProyectados : 0.0);
+  double get displayRentaAnual => displayRentaMensual * 12.0;
   double get displayTasaOcupacion => tasaOcupacion;
   double get displayAreaTotal => areaTotalRentable ?? 0.0;
   double get displayAreaOcupada => areaOcupada ?? (displayAreaTotal > 0 ? (displayAreaTotal * (displayTasaOcupacion / 100)) : 0.0);
