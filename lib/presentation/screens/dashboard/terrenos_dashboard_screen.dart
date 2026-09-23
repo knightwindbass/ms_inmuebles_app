@@ -27,6 +27,7 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
   List<InmuebleModel> _filteredTerrenos = [];
   final TextEditingController _searchController = TextEditingController();
   int _touchedIndex = -1;
+  bool _isAreaMode = false;
 
   // Paleta de colores oficial para Land Banking
   static const Color colorDisponible = Color(0xFF3B82F6); // Azul
@@ -189,7 +190,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
         ? desglose.areaTotal
         : _terrenos.fold(0.0, (sum, t) => sum + (t.metraje ?? 0.0));
     final double totalAreaTerrenos = _terrenos.fold(0.0, (sum, t) => sum + (t.metraje ?? 0.0));
-    final double totalValorTerrenos = _terrenos.fold(0.0, (sum, t) => sum + t.valorRentaBase);
+    final double totalValorTerrenos = desglose.valorTotal > 0
+        ? desglose.valorTotal
+        : _terrenos.fold(0.0, (sum, t) => sum + t.valorRentaBase);
     final double valorM2Promedio = desglose.valorM2Promedio > 0
         ? desglose.valorM2Promedio
         : (totalAreaTerrenos > 0 ? (totalValorTerrenos / totalAreaTerrenos) : 0.0);
@@ -202,14 +205,19 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
           // 1. CUATRO TARJETAS PRINCIPALES DE LAND BANKING (GRID 2x2)
           _buildKpiCards(volumenTotal, aportados, areaM2, valorM2Promedio, isDark),
 
+          const SizedBox(height: 12),
+
+          // 2. TARJETA DE ANCHO COMPLETO: VALOR REFERENCIAL TOTAL ($)
+          _buildValorReferencialTotalCard(totalValorTerrenos, valorM2Promedio, isDark),
+
           const SizedBox(height: 18),
 
-          // 2. GRÁFICO DE DONA: ESTADO DEL BANCO DE TIERRAS
+          // 3. GRÁFICO DE DONA: ESTADO DEL BANCO DE TIERRAS (Lotes o Área m²)
           _buildDonutChartCard(desglose, volumenTotal, isDark),
 
           const SizedBox(height: 20),
 
-          // 3. SECCIÓN DE INVENTARIO DE TERRENOS
+          // 4. SECCIÓN DE INVENTARIO DE TERRENOS
           _buildTerrenosSection(isDark),
         ],
       ),
@@ -359,14 +367,170 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     );
   }
 
-  /// 2. Gráfico de Dona: Estado del Desarrollo del Banco de Tierras
-  Widget _buildDonutChartCard(InmueblesDesglose desglose, int volumenTotal, bool isDark) {
-    final double valDisponible = desglose.disponibles.toDouble();
-    final double valAportado = desglose.aportados.toDouble();
-    final double valCrudo = desglose.disponibleSinRellenar.toDouble();
-    final double valEnDesarrollo = desglose.enDesarrollo.toDouble();
+  /// 2. Tarjeta de Valor Referencial Total de Terrenos (ancho completo, 2 columnas)
+  Widget _buildValorReferencialTotalCard(double totalValor, double valorM2Promedio, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Icono distinguido con gradiente esmeralda
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.account_balance_wallet_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Información y Montos
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Valor Referencial Total',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Avalúo Portafolio',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  AppFormatters.currency(totalValor),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  valorM2Promedio > 0
+                      ? 'Valuación base de la reserva (${AppFormatters.currency(valorM2Promedio)} / m² prom.)'
+                      : 'Valuación base total de la reserva territorial',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    final double sumTotal = valDisponible + valAportado + valCrudo + valEnDesarrollo;
+  /// 3. Gráfico de Dona: Estado del Desarrollo del Banco de Tierras (Lotes o Área m²)
+  Widget _buildDonutChartCard(InmueblesDesglose desglose, int volumenTotal, bool isDark) {
+    // 1. Conteo por Lotes (unidades)
+    double cntDisponible = desglose.disponibles.toDouble();
+    double cntAportado = desglose.aportados.toDouble();
+    double cntCrudo = desglose.disponibleSinRellenar.toDouble();
+    double cntEnDesarrollo = desglose.enDesarrollo.toDouble();
+
+    if (cntDisponible == 0 && cntAportado == 0 && cntCrudo == 0 && cntEnDesarrollo == 0) {
+      for (final t in _terrenos) {
+        final est = t.estado.toLowerCase().trim();
+        if (est.contains('aportad') || est.contains('fideicomiso')) {
+          cntAportado++;
+        } else if (est.contains('sin rellenar') || est.contains('sin_rellenar') || est.contains('crudo')) {
+          cntCrudo++;
+        } else if (est.contains('en desarrollo') || est.contains('en_desarrollo') || est.contains('rellenado')) {
+          cntEnDesarrollo++;
+        } else {
+          cntDisponible++;
+        }
+      }
+    }
+
+    // 2. Distribución por Área (m²)
+    double areaDisponible = 0.0;
+    double areaAportado = 0.0;
+    double areaCrudo = 0.0;
+    double areaEnDesarrollo = 0.0;
+
+    for (final t in _terrenos) {
+      final m = t.metraje ?? 0.0;
+      final est = t.estado.toLowerCase().trim();
+      if (est.contains('aportad') || est.contains('fideicomiso')) {
+        areaAportado += m;
+      } else if (est.contains('sin rellenar') || est.contains('sin_rellenar') || est.contains('crudo')) {
+        areaCrudo += m;
+      } else if (est.contains('en desarrollo') || est.contains('en_desarrollo') || est.contains('rellenado')) {
+        areaEnDesarrollo += m;
+      } else {
+        areaDisponible += m;
+      }
+    }
+
+    final bool isArea = _isAreaMode;
+    final double valDisp = isArea ? areaDisponible : cntDisponible;
+    final double valAport = isArea ? areaAportado : cntAportado;
+    final double valCrudo = isArea ? areaCrudo : cntCrudo;
+    final double valDesarr = isArea ? areaEnDesarrollo : cntEnDesarrollo;
+
+    final double sumTotal = valDisp + valAport + valCrudo + valDesarr;
     final bool hasData = sumTotal > 0;
 
     return Card(
@@ -383,7 +547,7 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                     const Icon(Icons.pie_chart_rounded, size: 18, color: Color(0xFF3B82F6)),
                     const SizedBox(width: 8),
                     Text(
-                      'Estado del Desarrollo Territorial',
+                      'Distribución Territorial',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -392,19 +556,47 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                     ),
                   ],
                 ),
+                // Selector de Modo: Por Lotes vs Por Área m²
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.all(2.5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '$volumenTotal Lotes',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF3B82F6),
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                      width: 1,
                     ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildChartToggleItem(
+                        label: 'Lotes',
+                        isSelected: !_isAreaMode,
+                        onTap: () {
+                          if (_isAreaMode) {
+                            setState(() {
+                              _isAreaMode = false;
+                              _touchedIndex = -1;
+                            });
+                          }
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildChartToggleItem(
+                        label: 'Área m²',
+                        isSelected: _isAreaMode,
+                        onTap: () {
+                          if (!_isAreaMode) {
+                            setState(() {
+                              _isAreaMode = true;
+                              _touchedIndex = -1;
+                            });
+                          }
+                        },
+                        isDark: isDark,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -415,7 +607,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
-                    'No hay registro de estados en los terrenos',
+                    isArea
+                        ? 'No hay registro de áreas en los terrenos'
+                        : 'No hay registro de estados en los terrenos',
                     style: TextStyle(
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
@@ -448,10 +642,10 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                         sectionsSpace: 3,
                         centerSpaceRadius: 52,
                         sections: _buildChartSections(
-                          valDisponible,
-                          valAportado,
+                          valDisp,
+                          valAport,
                           valCrudo,
-                          valEnDesarrollo,
+                          valDesarr,
                           sumTotal,
                         ),
                       ),
@@ -460,17 +654,18 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${sumTotal.toInt()}',
+                          isArea ? AppFormatters.area(sumTotal) : '${sumTotal.toInt()}',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: isArea ? 15 : 22,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
+                          textAlign: TextAlign.center,
                         ),
                         Text(
-                          'Lotes',
+                          isArea ? 'Superficie' : 'Lotes',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w600,
                             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
@@ -483,15 +678,57 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
               const SizedBox(height: 18),
               // Leyenda con porcentajes y cantidades
               _buildLegend(
-                valDisponible: valDisponible,
-                valAportado: valAportado,
+                valDisponible: valDisp,
+                valAportado: valAport,
                 valCrudo: valCrudo,
-                valEnDesarrollo: valEnDesarrollo,
+                valEnDesarrollo: valDesarr,
                 total: sumTotal,
+                isArea: isArea,
                 isDark: isDark,
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartToggleItem({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? const Color(0xFF334155) : Colors.white)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+          ),
         ),
       ),
     );
@@ -543,6 +780,7 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     required double valCrudo,
     required double valEnDesarrollo,
     required double total,
+    required bool isArea,
     required bool isDark,
   }) {
     return Column(
@@ -552,8 +790,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
             Expanded(
               child: _buildLegendItem(
                 label: 'Disponible (Listo desarrollo)',
-                count: valDisponible.toInt(),
+                value: valDisponible,
                 total: total,
+                isArea: isArea,
                 color: colorDisponible,
                 isDark: isDark,
               ),
@@ -562,8 +801,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
             Expanded(
               child: _buildLegendItem(
                 label: 'Aportado (Fideicomiso)',
-                count: valAportado.toInt(),
+                value: valAportado,
                 total: total,
+                isArea: isArea,
                 color: colorAportado,
                 isDark: isDark,
               ),
@@ -576,8 +816,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
             Expanded(
               child: _buildLegendItem(
                 label: 'Sin Rellenar (Crudo)',
-                count: valCrudo.toInt(),
+                value: valCrudo,
                 total: total,
+                isArea: isArea,
                 color: colorCrudo,
                 isDark: isDark,
               ),
@@ -586,8 +827,9 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
             Expanded(
               child: _buildLegendItem(
                 label: 'En Desarrollo / Rellenado',
-                count: valEnDesarrollo.toInt(),
+                value: valEnDesarrollo,
                 total: total,
+                isArea: isArea,
                 color: colorEnDesarrollo,
                 isDark: isDark,
               ),
@@ -600,12 +842,17 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
 
   Widget _buildLegendItem({
     required String label,
-    required int count,
+    required double value,
     required double total,
+    required bool isArea,
     required Color color,
     required bool isDark,
   }) {
-    final pct = total > 0 ? ((count / total) * 100).toStringAsFixed(1) : '0';
+    final pct = total > 0 ? ((value / total) * 100).toStringAsFixed(1) : '0';
+    final valueSubtitle = isArea
+        ? '${AppFormatters.area(value)} ($pct%)'
+        : '${value.toInt()} lote${value.toInt() == 1 ? '' : 's'} ($pct%)';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -641,7 +888,7 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '$count lote${count == 1 ? '' : 's'} ($pct%)',
+                  valueSubtitle,
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),

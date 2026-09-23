@@ -630,6 +630,14 @@ void main() {
       });
       expect(desglose2.valorM2Promedio, equals(3.50));
     });
+
+    test('InmueblesDesglose deserializa valorTotal correctamente', () {
+      final desglose = InmueblesDesglose.fromMap({
+        'total': 2,
+        'valor_referencial_total': '4500000.00',
+      });
+      expect(desglose.valorTotal, equals(4500000.0));
+    });
   });
 }
 
