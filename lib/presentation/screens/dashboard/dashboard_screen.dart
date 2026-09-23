@@ -5,6 +5,8 @@ import '../../../logic/dashboard_provider.dart';
 import '../../widgets/analytics_slide_block.dart';
 import '../../widgets/portfolio_hero_banner.dart';
 import '../../widgets/smart_kpi_card.dart';
+import 'categoria_kpi_screen.dart';
+import 'terrenos_dashboard_screen.dart';
 
 /// Pantalla Principal del Dashboard de Inteligencia de Negocios y Reportes (/dashboard/resumen).
 class DashboardScreen extends StatefulWidget {
@@ -147,160 +149,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         const SizedBox(height: 18),
 
-        // Tarjeta de Composición Jerárquica del Parque (A prueba de desbordamientos)
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Composición del Parque',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${kpis.inmuebles.total} Unidades',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFF59E0B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    // Columna Principales / Matrices
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.domain_rounded, size: 15, color: Color(0xFF2563EB)),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Principales',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Activas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                                Text('${kpis.jerarquia.princActivas}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Inactivas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                                Text('${kpis.jerarquia.princInactivas}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Columna Sub-unidades
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.meeting_room_rounded, size: 15, color: Color(0xFF8B5CF6)),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Sub-unidades',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Activas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                                Text('${kpis.jerarquia.subActivas}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Inactivas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                                Text('${kpis.jerarquia.subInactivas}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Sección Interactiva Deslizable: Composición del Parque & Acceso a KPIs por Categoría
+        _buildComposicionParque(context, provider, kpis, isDark),
         const SizedBox(height: 16),
 
         // Bloque Deslizable (Slide): Tipología & Rentabilidad por Ubicación
@@ -521,6 +371,374 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Sección Interactiva con Scroll Horizontal: Jerarquía + Botones de Categorías con KPIs
+  Widget _buildComposicionParque(BuildContext context, DashboardProvider provider, dynamic kpis, bool isDark) {
+    int getCategoryCount(String tipo) {
+      if (tipo.toLowerCase() == 'terreno') {
+        final tCount = provider.terrenosKpis?.inmuebles.total;
+        if (tCount != null && tCount > 0) return tCount;
+      }
+      for (final d in kpis.distribucionTiposEstado) {
+        if (d.tipo.toLowerCase() == tipo.toLowerCase()) {
+          return d.libres + d.ocupadas;
+        }
+      }
+      return 0;
+    }
+
+    final categories = [
+      {
+        'tipo': 'Edificio',
+        'label': 'Edificios',
+        'icon': Icons.domain_rounded,
+        'color': const Color(0xFF2563EB),
+        'count': getCategoryCount('Edificio'),
+      },
+      {
+        'tipo': 'Bodega',
+        'label': 'Bodegas',
+        'icon': Icons.warehouse_rounded,
+        'color': const Color(0xFF0284C7),
+        'count': getCategoryCount('Bodega'),
+      },
+      {
+        'tipo': 'Local',
+        'label': 'Locales',
+        'icon': Icons.storefront_rounded,
+        'color': const Color(0xFF10B981),
+        'count': getCategoryCount('Local'),
+      },
+      {
+        'tipo': 'Oficina',
+        'label': 'Oficinas',
+        'icon': Icons.business_center_rounded,
+        'color': const Color(0xFFF59E0B),
+        'count': getCategoryCount('Oficina'),
+      },
+      {
+        'tipo': 'Terreno',
+        'label': 'Terrenos',
+        'icon': Icons.landscape_rounded,
+        'color': const Color(0xFF8B5CF6),
+        'count': getCategoryCount('Terreno'),
+        'badge': 'Land Banking',
+      },
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Composición del Parque',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Desliza horizontalmente para explorar categorías →',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${kpis.inmuebles.total} Unidades',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFF59E0B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // 1. Tarjeta Principales / Matrices
+                  _buildHierarchyCard(
+                    title: 'Principales',
+                    icon: Icons.domain_rounded,
+                    iconColor: const Color(0xFF2563EB),
+                    activas: kpis.jerarquia.princActivas,
+                    inactivas: kpis.jerarquia.princInactivas,
+                    total: kpis.jerarquia.totalPrincipales,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 10),
+                  // 2. Tarjeta Sub-unidades
+                  _buildHierarchyCard(
+                    title: 'Sub-unidades',
+                    icon: Icons.meeting_room_rounded,
+                    iconColor: const Color(0xFF8B5CF6),
+                    activas: kpis.jerarquia.subActivas,
+                    inactivas: kpis.jerarquia.subInactivas,
+                    total: kpis.jerarquia.totalSubunidades,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 10),
+                  // 3. Botones para cada Categoría
+                  ...categories.map((cat) {
+                    final tipo = cat['tipo'] as String;
+                    final label = cat['label'] as String;
+                    final icon = cat['icon'] as IconData;
+                    final color = cat['color'] as Color;
+                    final count = cat['count'] as int;
+                    final badge = cat['badge'] as String?;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: _buildCategoryButton(
+                        tipo: tipo,
+                        label: label,
+                        icon: icon,
+                        color: color,
+                        count: count,
+                        badge: badge,
+                        isDark: isDark,
+                        onTap: () {
+                          if (tipo.toLowerCase() == 'terreno') {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const TerrenosDashboardScreen(),
+                              ),
+                            );
+                          } else {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => CategoriaKpiScreen(tipo: tipo),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHierarchyCard({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required int activas,
+    required int inactivas,
+    required int total,
+    required bool isDark,
+  }) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Activas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+              Text('$activas', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Inactivas:', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+              Text('$inactivas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Total: $total',
+              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: iconColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryButton({
+    required String tipo,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required int count,
+    String? badge,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 140,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: color.withOpacity(isDark ? 0.45 : 0.35),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, size: 16, color: color),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'KPIs',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 9, color: color),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$count ${count == 1 ? "unidad" : "unidades"}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (badge != null) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ms_inmuebles_app/core/theme/app_theme.dart';
 import 'package:ms_inmuebles_app/core/utils/formatters.dart';
 import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
 import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
@@ -521,6 +522,53 @@ void main() {
 
       expect(totalMRR, equals(4000.0));
       expect(totalArea, equals(580.0));
+    });
+
+    test('DashboardKpiModel y InmueblesDesglose procesan métricas exclusivas de Land Banking', () {
+      final jsonLandBanking = {
+        "inmuebles": {
+          "total": 12,
+          "area_total": 450000.50,
+          "disponible": 4,
+          "aportado": 3,
+          "disponible_sin_rellenar": 2,
+          "en_desarrollo": 3
+        }
+      };
+
+      final model = DashboardKpiModel.fromJson(jsonLandBanking);
+
+      expect(model.inmuebles.total, equals(12));
+      expect(model.inmuebles.areaTotal, equals(450000.50));
+      expect(model.inmuebles.disponibles, equals(4));
+      expect(model.inmuebles.aportados, equals(3));
+      expect(model.inmuebles.disponibleSinRellenar, equals(2));
+      expect(model.inmuebles.enDesarrollo, equals(3));
+    });
+
+    test('AppTheme asigna colores semánticos correctos a los 4 estados de Land Banking', () {
+      expect(
+        AppTheme.getColorForEstado('Disponible (Listo para desarrollo)'),
+        equals(AppTheme.statusDisponible),
+      );
+      expect(
+        AppTheme.getColorForEstado('Aportado (Fideicomiso)'),
+        equals(AppTheme.statusAportado),
+      );
+      expect(
+        AppTheme.getColorForEstado('Disponible / Sin Rellenar'),
+        equals(AppTheme.statusSinRellenar),
+      );
+      expect(
+        AppTheme.getColorForEstado('En Desarrollo / Rellenado'),
+        equals(AppTheme.statusEnDesarrollo),
+      );
+    });
+
+    test('InmuebleModel normaliza tipología Terreno (Land Banking)', () {
+      expect(InmuebleModel.normalizeTipo('Terreno (Land Banking)'), equals('Terreno'));
+      expect(InmuebleModel.normalizeTipo('terreno'), equals('Terreno'));
+      expect(InmuebleModel.normalizeTipo('TERRENO'), equals('Terreno'));
     });
   });
 }

@@ -216,12 +216,22 @@ class InmueblesDesglose {
   final int mantenimiento;
   final int inactivo;
 
+  // Métricas específicas de Land Banking (Terrenos)
+  final double areaTotal;
+  final int aportados;
+  final int disponibleSinRellenar;
+  final int enDesarrollo;
+
   InmueblesDesglose({
     this.total = 0,
     this.disponibles = 0,
     this.rentados = 0,
     this.mantenimiento = 0,
     this.inactivo = 0,
+    this.areaTotal = 0.0,
+    this.aportados = 0,
+    this.disponibleSinRellenar = 0,
+    this.enDesarrollo = 0,
   });
 
   factory InmueblesDesglose.fromJson(dynamic rawJson, [Map<String, dynamic>? rootJson]) {
@@ -270,9 +280,15 @@ class InmueblesDesglose {
     final mant = _toInt(json['mantenimiento'] ?? json['en_mantenimiento'] ?? json['reparacion']);
     final inac = _toInt(json['inactivo'] ?? json['inactivos'] ?? json['desactivados']);
 
+    // Soporte Land Banking
+    final aport = _toInt(json['aportado'] ?? json['aportados'] ?? json['fideicomiso']);
+    final sinRellenar = _toInt(json['disponible_sin_rellenar'] ?? json['sin_rellenar'] ?? json['crudo']);
+    final enDesarr = _toInt(json['en_desarrollo'] ?? json['en_desarrollo_rellenado'] ?? json['rellenado']);
+    final areaTot = _toDouble(json['area_total'] ?? json['reserva_territorial'] ?? json['superficie_total'] ?? json['area']);
+
     int tot = _toInt(json['total'] ?? json['total_inmuebles'] ?? json['conteo'] ?? json['cantidad'] ?? json['count']);
     if (tot == 0) {
-      tot = fallbackTotal ?? (disp + rent + mant + inac);
+      tot = fallbackTotal ?? (disp + rent + mant + inac + aport + sinRellenar + enDesarr);
     }
 
     return InmueblesDesglose(
@@ -281,7 +297,18 @@ class InmueblesDesglose {
       rentados: rent,
       mantenimiento: mant,
       inactivo: inac,
+      areaTotal: areaTot,
+      aportados: aport,
+      disponibleSinRellenar: sinRellenar,
+      enDesarrollo: enDesarr,
     );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 
   static int _toInt(dynamic value) {

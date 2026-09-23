@@ -9,10 +9,20 @@ class DashboardRepository {
 
   DashboardRepository(this._client);
 
-  Future<DashboardKpiModel> getResumen({int? padreId}) async {
+  Future<DashboardKpiModel> getResumen({
+    int? padreId,
+    String? tipo,
+    String? excludeTipo,
+  }) async {
     final queryParams = <String, dynamic>{};
     if (padreId != null && padreId > 0) {
       queryParams['padre_id'] = padreId;
+    }
+    if (tipo != null && tipo.trim().isNotEmpty) {
+      queryParams['tipo'] = tipo.trim();
+    }
+    if (excludeTipo != null && excludeTipo.trim().isNotEmpty) {
+      queryParams['exclude_tipo'] = excludeTipo.trim();
     }
 
     final response = await _client.get(

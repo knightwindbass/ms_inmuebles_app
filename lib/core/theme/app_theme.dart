@@ -23,19 +23,33 @@ class AppTheme {
   static const Color statusMantenimiento = Color(0xFFF59E0B); // Naranja #f59e0b
   static const Color statusInactivo = Color(0xFF94A3B8); // Gris #94a3b8
 
+  // Colores para Land Banking
+  static const Color statusAportado = Color(0xFF8B5CF6); // Morado #8b5cf6
+  static const Color statusSinRellenar = Color(0xFF06B6D4); // Cian / Celeste #06b6d4
+  static const Color statusEnDesarrollo = Color(0xFF10B981); // Verde #10b981
+
   /// Helper para el Color de la "Pastilla" (Badge) según el Estado
   static Color getColorForEstado(String? estado) {
-    switch (estado?.toLowerCase().trim()) {
-      case 'disponible':
-        return statusDisponible; // Azul #3b82f6
-      case 'rentado':
-        return statusRentado; // Verde #10b981
-      case 'mantenimiento':
-        return statusMantenimiento; // Naranja #f59e0b
-      case 'inactivo':
-      default:
-        return statusInactivo; // Gris #94a3b8
+    final est = estado?.toLowerCase().trim() ?? '';
+    if (est.contains('aportad') || est.contains('fideicomiso')) {
+      return statusAportado;
     }
+    if (est.contains('sin rellenar') || est.contains('sin_rellenar') || est.contains('crudo')) {
+      return statusSinRellenar;
+    }
+    if (est.contains('en desarrollo') || est.contains('en_desarrollo') || est.contains('rellenado')) {
+      return statusEnDesarrollo;
+    }
+    if (est.contains('rentad') || est.contains('ocupad')) {
+      return statusRentado;
+    }
+    if (est.contains('manten')) {
+      return statusMantenimiento;
+    }
+    if (est.contains('disp') || est.contains('libre')) {
+      return statusDisponible;
+    }
+    return statusInactivo;
   }
 
   /// Helper para el Ícono según la Tipología

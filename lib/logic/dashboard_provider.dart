@@ -11,6 +11,7 @@ class DashboardProvider extends ChangeNotifier {
   final InmueblesRepository? _inmueblesRepository;
 
   DashboardKpiModel? _kpis;
+  DashboardKpiModel? _terrenosKpis;
   TenantPerfilModel? _tenantPerfil;
   bool _isLoading = false;
   String? _errorMessage;
@@ -19,6 +20,7 @@ class DashboardProvider extends ChangeNotifier {
   DashboardProvider(this._repository, [this._inmueblesRepository]);
 
   DashboardKpiModel? get kpis => _kpis;
+  DashboardKpiModel? get terrenosKpis => _terrenosKpis;
   TenantPerfilModel? get tenantPerfil => _tenantPerfil;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -28,6 +30,11 @@ class DashboardProvider extends ChangeNotifier {
   String? get logoUrl => _tenantPerfil?.logo ?? _kpis?.logoUrl;
   String? get slogan => _tenantPerfil?.slogan ?? _kpis?.slogan;
 
+  /// Obtiene métricas aisladas para una categoría o tipología específica
+  Future<DashboardKpiModel> fetchCategoryKpi(String tipo) async {
+    return await _repository.getResumen(tipo: tipo);
+  }
+
   Future<void> fetchDashboard({int? padreId}) async {
     _selectedPadreId = padreId;
     _isLoading = true;
@@ -35,8 +42,16 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Obtener la respuesta directa del endpoint del Dashboard (/dashboard/resumen)
-      DashboardKpiModel kpisResult = await _repository.getResumen(padreId: _selectedPadreId);
+      // 1. Obtener la respuesta directa del endpoint del Dashboard (/dashboard/resumen?exclude_tipo=Terreno)
+      DashboardKpiModel kpisResult = await _repository.getResumen(
+        padreId: _selectedPadreId,
+        excludeTipo: 'Terreno',
+      );
+
+      // 1.1 Obtener en paralelo el resumen del Banco de Tierras (Land Banking)
+      try {
+        _terrenosKpis = await _repository.getResumen(tipo: 'Terreno');
+      } catch (_) {}
 
       // 2. Obtener opcionalmente personalización de branding del Tenant (/tenant/perfil)
       try {
@@ -96,8 +111,8 @@ class DashboardProvider extends ChangeNotifier {
         .where((id) => id != null && id > 0)
         .toSet();
 
-    // Unidades arrendables: hijas o propiedades independientes sin subunidades
-    final leasableUnits = list.where((e) => !parentIds.contains(e.id)).toList();
+    // Unidades arrendables comerciales: hijas o propiedades independientes sin subunidades (excluyendo Terrenos)
+    final leasableUnits = list.where((e) => e.tipo.toLowerCase() != 'terreno' && !parentIds.contains(e.id)).toList();
 
     // 1. Área total rentable (m²): suma de metrajes de unidades arrendables
     final double computedAreaTotal = leasableUnits.fold(0.0, (sum, u) => sum + (u.metraje ?? 0.0));
