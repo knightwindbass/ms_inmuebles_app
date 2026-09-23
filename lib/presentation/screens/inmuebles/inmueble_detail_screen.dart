@@ -165,6 +165,13 @@ class _InmuebleDetailScreenState extends State<InmuebleDetailScreen> with Single
                   item.metraje != null && item.metraje! > 0 ? AppFormatters.area(item.metraje) : 'No especificado',
                   isDark,
                 ),
+                if (item.valorM2 > 0)
+                  _buildInfoRow(
+                    Icons.monetization_on_outlined,
+                    'Valor por m²',
+                    '\$${item.valorM2.toStringAsFixed(2)} / m²',
+                    isDark,
+                  ),
                 _buildInfoRow(
                   Icons.person_outline_rounded,
                   'Propietario',

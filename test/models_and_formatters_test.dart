@@ -583,6 +583,53 @@ void main() {
       expect(model.displayRentaMensual, equals(25000.0));
       expect(model.displayRentaAnual, equals(300000.0)); // 25,000 * 12
     });
+
+    test('InmuebleModel calcula y expone valorM2 correctamente', () {
+      // Caso 1: Calculado a partir de valorRentaBase y metraje (ej. Lote 1 de la API)
+      final lote1 = InmuebleModel.fromJson({
+        'id': 112,
+        'nombre': 'Lote 1',
+        'tipo': 'Terreno',
+        'metraje': '878818.00',
+        'valor_renta_base': '2416749.50',
+      });
+      expect(lote1.valorM2, closeTo(2.75, 0.01));
+
+      // Caso 2: Proporcionado explícitamente en el JSON (valor_m2)
+      final loteExplicit = InmuebleModel.fromJson({
+        'id': 113,
+        'nombre': 'Lote 2',
+        'tipo': 'Terreno',
+        'metraje': '1000.00',
+        'valor_renta_base': '50000.00',
+        'valor_m2': '60.00',
+      });
+      expect(loteExplicit.valorM2, equals(60.0));
+
+      // Caso 3: Sin metraje o metraje 0
+      final loteCero = InmuebleModel.fromJson({
+        'id': 114,
+        'nombre': 'Lote 3',
+        'tipo': 'Terreno',
+        'metraje': '0',
+        'valor_renta_base': '50000.00',
+      });
+      expect(loteCero.valorM2, equals(0.0));
+    });
+
+    test('InmueblesDesglose deserializa valorM2Promedio correctamente', () {
+      final desglose1 = InmueblesDesglose.fromMap({
+        'total': 5,
+        'valor_m2_promedio': '2.75',
+      });
+      expect(desglose1.valorM2Promedio, equals(2.75));
+
+      final desglose2 = InmueblesDesglose.fromMap({
+        'total': 5,
+        'precio_m2_promedio': 3.50,
+      });
+      expect(desglose2.valorM2Promedio, equals(3.50));
+    });
   });
 }
 

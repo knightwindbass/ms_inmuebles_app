@@ -18,6 +18,7 @@ class InmuebleModel {
   final List<String> galeria;
   final List<ContratoModel> contratos;
   final List<InmuebleModel> subunidades;
+  final double? valorM2Raw;
 
   InmuebleModel({
     required this.id,
@@ -35,6 +36,7 @@ class InmuebleModel {
     this.galeria = const [],
     this.contratos = const [],
     this.subunidades = const [],
+    this.valorM2Raw,
   });
 
   bool get isRentado => estado.toLowerCase() == 'rentado';
@@ -44,6 +46,15 @@ class InmuebleModel {
 
   bool get isMatriz => (propiedadPadreId == null || propiedadPadreId == 0) && (tipo.toLowerCase() == 'edificio' || subunidades.isNotEmpty);
   bool get isSubunidad => propiedadPadreId != null && propiedadPadreId! > 0;
+
+  /// Valor por metro cuadrado ($/m²)
+  double get valorM2 {
+    if (valorM2Raw != null && valorM2Raw! > 0) return valorM2Raw!;
+    if (metraje != null && metraje! > 0 && valorRentaBase > 0) {
+      return valorRentaBase / metraje!;
+    }
+    return 0.0;
+  }
 
   static String normalizeTipo(String? raw) {
     if (raw == null || raw.trim().isEmpty) return 'Local';
@@ -89,6 +100,9 @@ class InmuebleModel {
           .whereType<Map<String, dynamic>>()
           .map((e) => InmuebleModel.fromJson(e))
           .toList(),
+      valorM2Raw: (json['valor_m2'] != null || json['precio_m2'] != null || json['m2_valor'] != null)
+          ? _toDouble(json['valor_m2'] ?? json['precio_m2'] ?? json['m2_valor'])
+          : null,
     );
   }
 

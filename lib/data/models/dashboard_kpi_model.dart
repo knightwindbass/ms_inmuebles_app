@@ -222,6 +222,7 @@ class InmueblesDesglose {
   final int aportados;
   final int disponibleSinRellenar;
   final int enDesarrollo;
+  final double valorM2Promedio;
 
   InmueblesDesglose({
     this.total = 0,
@@ -233,6 +234,7 @@ class InmueblesDesglose {
     this.aportados = 0,
     this.disponibleSinRellenar = 0,
     this.enDesarrollo = 0,
+    this.valorM2Promedio = 0.0,
   });
 
   factory InmueblesDesglose.fromJson(dynamic rawJson, [Map<String, dynamic>? rootJson]) {
@@ -286,6 +288,7 @@ class InmueblesDesglose {
     final sinRellenar = _toInt(json['disponible_sin_rellenar'] ?? json['sin_rellenar'] ?? json['crudo']);
     final enDesarr = _toInt(json['en_desarrollo'] ?? json['en_desarrollo_rellenado'] ?? json['rellenado']);
     final areaTot = _toDouble(json['area_total'] ?? json['reserva_territorial'] ?? json['superficie_total'] ?? json['area']);
+    final valorM2Prom = _toDouble(json['valor_m2_promedio'] ?? json['precio_m2_promedio'] ?? json['valor_promedio_m2'] ?? json['m2_promedio']);
 
     int tot = _toInt(json['total'] ?? json['total_inmuebles'] ?? json['conteo'] ?? json['cantidad'] ?? json['count']);
     if (tot == 0) {
@@ -302,6 +305,7 @@ class InmueblesDesglose {
       aportados: aport,
       disponibleSinRellenar: sinRellenar,
       enDesarrollo: enDesarr,
+      valorM2Promedio: valorM2Prom,
     );
   }
 

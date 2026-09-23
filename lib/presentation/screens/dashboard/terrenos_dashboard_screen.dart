@@ -188,14 +188,19 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     final double areaM2 = desglose.areaTotal > 0
         ? desglose.areaTotal
         : _terrenos.fold(0.0, (sum, t) => sum + (t.metraje ?? 0.0));
+    final double totalAreaTerrenos = _terrenos.fold(0.0, (sum, t) => sum + (t.metraje ?? 0.0));
+    final double totalValorTerrenos = _terrenos.fold(0.0, (sum, t) => sum + t.valorRentaBase);
+    final double valorM2Promedio = desglose.valorM2Promedio > 0
+        ? desglose.valorM2Promedio
+        : (totalAreaTerrenos > 0 ? (totalValorTerrenos / totalAreaTerrenos) : 0.0);
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
-          // 1. TRES TARJETAS PRINCIPALES DE LAND BANKING
-          _buildKpiCards(volumenTotal, aportados, areaM2, isDark),
+          // 1. CUATRO TARJETAS PRINCIPALES DE LAND BANKING (GRID 2x2)
+          _buildKpiCards(volumenTotal, aportados, areaM2, valorM2Promedio, isDark),
 
           const SizedBox(height: 18),
 
@@ -211,44 +216,66 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     );
   }
 
-  /// 1. Tarjetas de KPIs Principales de Terrenos
-  Widget _buildKpiCards(int volumenTotal, int aportados, double areaM2, bool isDark) {
-    return Row(
+  /// 1. Tarjetas de KPIs Principales de Terrenos (Grid 2x2)
+  Widget _buildKpiCards(int volumenTotal, int aportados, double areaM2, double valorM2Promedio, bool isDark) {
+    final valorM2Str = valorM2Promedio > 0 ? '\$${valorM2Promedio.toStringAsFixed(2)} / m²' : '-';
+
+    return Column(
       children: [
-        // 1. Tarjeta: Volumen Total
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Volumen Total',
-            value: '$volumenTotal',
-            subtitle: 'Lotes registrados',
-            icon: Icons.layers_rounded,
-            accentColor: colorDisponible,
-            isDark: isDark,
-          ),
+        Row(
+          children: [
+            // 1. Tarjeta: Volumen Total
+            Expanded(
+              child: _buildMetricCard(
+                title: 'Volumen Total',
+                value: '$volumenTotal',
+                subtitle: 'Lotes registrados',
+                icon: Icons.layers_rounded,
+                accentColor: colorDisponible,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // 2. Tarjeta: Aportados en Fideicomiso
+            Expanded(
+              child: _buildMetricCard(
+                title: 'Fideicomisos',
+                value: '$aportados',
+                subtitle: 'Tierra aportada',
+                icon: Icons.account_balance_rounded,
+                accentColor: colorAportado,
+                isDark: isDark,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        // 2. Tarjeta: Aportados en Fideicomiso
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Fideicomisos',
-            value: '$aportados',
-            subtitle: 'Tierra aportada',
-            icon: Icons.account_balance_rounded,
-            accentColor: colorAportado,
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        // 3. Tarjeta: Reserva Territorial
-        Expanded(
-          child: _buildMetricCard(
-            title: 'Reserva',
-            value: AppFormatters.area(areaM2),
-            subtitle: 'Superficie total',
-            icon: Icons.square_foot_rounded,
-            accentColor: colorCrudo,
-            isDark: isDark,
-          ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            // 3. Tarjeta: Reserva Territorial
+            Expanded(
+              child: _buildMetricCard(
+                title: 'Reserva Territorial',
+                value: AppFormatters.area(areaM2),
+                subtitle: 'Superficie total',
+                icon: Icons.square_foot_rounded,
+                accentColor: colorCrudo,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // 4. Tarjeta: Valor m² Promedio
+            Expanded(
+              child: _buildMetricCard(
+                title: 'Valor m² Promedio',
+                value: valorM2Str,
+                subtitle: 'Promedio portafolio',
+                icon: Icons.monetization_on_outlined,
+                accentColor: colorEnDesarrollo,
+                isDark: isDark,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -796,6 +823,63 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
                   StatusBadge(status: terreno.estado, isSmall: true),
                 ],
               ),
+              if (terreno.valorM2 > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withOpacity(0.25),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.monetization_on_outlined,
+                            size: 13,
+                            color: Color(0xFF10B981),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Valor m²: ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF065F46),
+                            ),
+                          ),
+                          Text(
+                            '\$${terreno.valorM2.toStringAsFixed(2)} / m²',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? const Color(0xFF34D399) : const Color(0xFF047857),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (terreno.valorRentaBase > 0) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Valuación: ${AppFormatters.currency(terreno.valorRentaBase)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ],
           ),
         ),
