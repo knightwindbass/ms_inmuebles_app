@@ -11,6 +11,7 @@ class InmueblesRepository {
   Future<List<InmuebleModel>> getInmuebles({
     String? estado,
     String? tipo,
+    String? excludeTipo,
     String? buscar,
     String? propietario,
     int? padreId,
@@ -25,6 +26,9 @@ class InmueblesRepository {
     if (tipo != null && tipo.trim().isNotEmpty) {
       queryParams['f_tipo'] = tipo.trim();
       queryParams['tipo'] = tipo.trim();
+    }
+    if (excludeTipo != null && excludeTipo.trim().isNotEmpty) {
+      queryParams['exclude_tipo'] = excludeTipo.trim();
     }
     if (propietario != null && propietario.trim().isNotEmpty) {
       queryParams['f_propietario'] = propietario.trim();

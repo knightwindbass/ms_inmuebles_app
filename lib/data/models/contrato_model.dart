@@ -60,6 +60,8 @@ class ContratoModel {
   final String? numeroContrato;
   final String fechaInicio;
   final String fechaFin;
+  final String? fechaFinReal;
+  final bool isAutoProjected;
   final double valorPactado;
   final String frecuenciaPago;
   final String estado;
@@ -81,6 +83,8 @@ class ContratoModel {
     this.numeroContrato,
     required this.fechaInicio,
     required this.fechaFin,
+    this.fechaFinReal,
+    this.isAutoProjected = false,
     required this.valorPactado,
     this.frecuenciaPago = 'mensual',
     this.estado = 'vigente',
@@ -131,11 +135,31 @@ class ContratoModel {
   /// Alias de metraje total para compatibilidad
   double get metrajeTotal => totalMetraje;
 
-  /// Cálculo de los días restantes hasta la fecha de fin
-  int get diasRestantes {
-    if (fechaFin.isEmpty) return 0;
+  /// Fecha efectiva de fin del contrato (usa fechaFinReal si está disponible por renovación automática)
+  String get fechaFinEffective =>
+      (fechaFinReal != null && fechaFinReal!.trim().isNotEmpty) ? fechaFinReal!.trim() : fechaFin;
+
+  /// Años continuos de antigüedad del inquilino desde fechaInicio
+  int get aniosAntiguedad {
+    if (fechaInicio.isEmpty) return 0;
     try {
-      final target = DateTime.parse(fechaFin);
+      final start = DateTime.parse(fechaInicio);
+      final now = DateTime.now();
+      if (start.isBefore(now)) {
+        return (now.difference(start).inDays / 365).floor();
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Cálculo de los días restantes hasta la fecha de fin (priorizando fechaFinReal)
+  int get diasRestantes {
+    final effective = fechaFinEffective;
+    if (effective.isEmpty) return 0;
+    try {
+      final target = DateTime.parse(effective);
       final now = DateTime.now();
       return target.difference(DateTime(now.year, now.month, now.day)).inDays;
     } catch (_) {
@@ -156,6 +180,8 @@ class ContratoModel {
     String? numeroContrato,
     String? fechaInicio,
     String? fechaFin,
+    String? fechaFinReal,
+    bool? isAutoProjected,
     double? valorPactado,
     String? frecuenciaPago,
     String? estado,
@@ -185,6 +211,8 @@ class ContratoModel {
       numeroContrato: numeroContrato ?? this.numeroContrato,
       fechaInicio: fechaInicio ?? this.fechaInicio,
       fechaFin: fechaFin ?? this.fechaFin,
+      fechaFinReal: fechaFinReal ?? this.fechaFinReal,
+      isAutoProjected: isAutoProjected ?? this.isAutoProjected,
       valorPactado: valorPactado ?? this.valorPactado,
       frecuenciaPago: frecuenciaPago ?? this.frecuenciaPago,
       estado: estado ?? this.estado,
@@ -277,6 +305,11 @@ class ContratoModel {
 
     final String bestEstado = (isVigente || other.isVigente) ? 'vigente' : estado;
 
+    final String? bestFechaFinReal = (fechaFinReal != null && fechaFinReal!.isNotEmpty)
+        ? fechaFinReal
+        : other.fechaFinReal;
+    final bool bestIsAutoProjected = isAutoProjected || other.isAutoProjected;
+
     return copyWith(
       numeroContrato: bestNumero,
       valorPactado: newValorPactado,
@@ -288,6 +321,8 @@ class ContratoModel {
       emailInquilino: bestEmail,
       telefonoInquilino: bestTel,
       propietario: bestProp,
+      fechaFinReal: bestFechaFinReal,
+      isAutoProjected: bestIsAutoProjected,
       inmueblesAsociados: combinedInmuebles,
     );
   }
@@ -410,11 +445,18 @@ class ContratoModel {
       );
     }
 
+    final bool isAutoProjected = json['is_auto_projected'] == true ||
+        json['is_auto_projected'] == 1 ||
+        json['is_auto_projected']?.toString().toLowerCase() == 'true';
+    final String? fechaFinReal = json['fecha_fin_real']?.toString();
+
     return ContratoModel(
       id: parsedId,
       numeroContrato: parsedNumero,
       fechaInicio: json['fecha_inicio']?.toString() ?? '',
       fechaFin: json['fecha_fin']?.toString() ?? '',
+      fechaFinReal: fechaFinReal,
+      isAutoProjected: isAutoProjected,
       valorPactado: parsedMonto,
       frecuenciaPago: json['frecuencia_pago']?.toString().toLowerCase() ?? 'mensual',
       estado: json['estado']?.toString().toLowerCase() ?? 'vigente',
@@ -439,6 +481,8 @@ class ContratoModel {
       'numero_contrato': numeroContrato,
       'fecha_inicio': fechaInicio,
       'fecha_fin': fechaFin,
+      if (fechaFinReal != null) 'fecha_fin_real': fechaFinReal,
+      'is_auto_projected': isAutoProjected,
       'valor_pactado': valorPactado,
       'frecuencia_pago': frecuenciaPago,
       'estado': estado,

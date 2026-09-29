@@ -11,7 +11,7 @@ class ContratosProvider extends ChangeNotifier {
   String? _errorMessage;
 
   String _searchQuery = '';
-  String _selectedOrden = 'vencimiento_asc'; // Por defecto: Próximos a vencer
+  String _selectedOrden = 'monto_desc'; // Por defecto: Monto mayor a menor
 
   ContratosProvider(this._repository);
 
@@ -79,10 +79,10 @@ class ContratosProvider extends ChangeNotifier {
   void _sortContratos(List<ContratoModel> list) {
     switch (_selectedOrden) {
       case 'vencimiento_asc':
-        list.sort((a, b) => a.fechaFin.compareTo(b.fechaFin));
+        list.sort((a, b) => a.fechaFinEffective.compareTo(b.fechaFinEffective));
         break;
       case 'vencimiento_desc':
-        list.sort((a, b) => b.fechaFin.compareTo(a.fechaFin));
+        list.sort((a, b) => b.fechaFinEffective.compareTo(a.fechaFinEffective));
         break;
       case 'monto_desc':
         list.sort((a, b) => b.valorPactado.compareTo(a.valorPactado));
@@ -134,6 +134,10 @@ class ContratosProvider extends ChangeNotifier {
           metraje: (cached.totalMetraje > 0 && (remote.metraje == null || remote.metraje == 0))
               ? cached.totalMetraje
               : remote.metraje,
+          fechaFinReal: (remote.fechaFinReal != null && remote.fechaFinReal!.isNotEmpty)
+              ? remote.fechaFinReal
+              : cached.fechaFinReal,
+          isAutoProjected: remote.isAutoProjected || cached.isAutoProjected,
         );
       }
       return remote;

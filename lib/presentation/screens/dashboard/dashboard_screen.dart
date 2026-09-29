@@ -551,14 +551,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'color': const Color(0xFFF59E0B),
         'count': getCategoryCount('Oficina'),
       },
-      {
-        'tipo': 'Terreno',
-        'label': 'Terrenos',
-        'icon': Icons.landscape_rounded,
-        'color': const Color(0xFF8B5CF6),
-        'count': getCategoryCount('Terreno'),
-        'badge': 'Land Banking',
-      },
     ];
 
     return Card(
@@ -601,7 +593,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.12),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -633,7 +625,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     isDark: isDark,
                   ),
                   const SizedBox(width: 10),
-                  // 2. Tarjeta Sub-unidades
+                  // 2. Tarjeta de KPI de Terrenos (Justo después de Principales)
+                  _buildCategoryButton(
+                    tipo: 'Terreno',
+                    label: 'Terrenos',
+                    icon: Icons.landscape_rounded,
+                    color: const Color(0xFF8B5CF6),
+                    count: getCategoryCount('Terreno'),
+                    badge: 'Land Banking',
+                    isDark: isDark,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TerrenosDashboardScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  // 3. Tarjeta Sub-unidades
                   _buildHierarchyCard(
                     title: 'Sub-unidades',
                     icon: Icons.meeting_room_rounded,
@@ -644,7 +654,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     isDark: isDark,
                   ),
                   const SizedBox(width: 10),
-                  // 3. Botones para cada Categoría
+                  // 4. Botones para cada Categoría comercial
                   ...categories.map((cat) {
                     final tipo = cat['tipo'] as String;
                     final label = cat['label'] as String;

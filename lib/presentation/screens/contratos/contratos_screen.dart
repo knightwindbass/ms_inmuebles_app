@@ -43,6 +43,28 @@ class _ContratosScreenState extends State<ContratosScreen> {
               ),
               const SizedBox(height: 8),
               ListTile(
+                leading: const Icon(Icons.attach_money_rounded),
+                title: const Text('Mayor monto (por defecto)'),
+                trailing: provider.selectedOrden == ApiConstants.ordenMontoDesc
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF2563EB))
+                    : null,
+                onTap: () {
+                  provider.setOrden(ApiConstants.ordenMontoDesc);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_upward_rounded),
+                title: const Text('Menor monto (monto_asc)'),
+                trailing: provider.selectedOrden == ApiConstants.ordenMontoAsc
+                    ? const Icon(Icons.check_rounded, color: Color(0xFF2563EB))
+                    : null,
+                onTap: () {
+                  provider.setOrden(ApiConstants.ordenMontoAsc);
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.timer_rounded),
                 title: const Text('Próximos a vencer (vencimiento_asc)'),
                 trailing: provider.selectedOrden == ApiConstants.ordenVencimientoAsc
@@ -65,28 +87,6 @@ class _ContratosScreenState extends State<ContratosScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.attach_money_rounded),
-                title: const Text('Mayor monto (monto_desc)'),
-                trailing: provider.selectedOrden == ApiConstants.ordenMontoDesc
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF2563EB))
-                    : null,
-                onTap: () {
-                  provider.setOrden(ApiConstants.ordenMontoDesc);
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.arrow_upward_rounded),
-                title: const Text('Menor monto (monto_asc)'),
-                trailing: provider.selectedOrden == ApiConstants.ordenMontoAsc
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF2563EB))
-                    : null,
-                onTap: () {
-                  provider.setOrden(ApiConstants.ordenMontoAsc);
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.sort_by_alpha_rounded),
                 title: const Text('Inquilino A-Z (inquilino_asc)'),
                 trailing: provider.selectedOrden == ApiConstants.ordenInquilinoAsc
@@ -104,13 +104,12 @@ class _ContratosScreenState extends State<ContratosScreen> {
     );
   }
 
-  /// Helper de Indicador Visual de Tiempo Restante (Guía Técnica)
-  Widget _buildStatusBadge(String fechaFinStr) {
-    if (fechaFinStr.isEmpty) return const SizedBox.shrink();
+  /// Helper de Indicador Visual de Tiempo Restante y Proyección Automática
+  Widget _buildStatusBadge(ContratoModel contrato) {
+    final effectiveFin = contrato.fechaFinEffective;
+    if (effectiveFin.isEmpty) return const SizedBox.shrink();
     try {
-      final DateTime hoy = DateTime.now();
-      final DateTime fechaFin = DateTime.parse(fechaFinStr);
-      final int diasRestantes = fechaFin.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+      final int diasRestantes = contrato.diasRestantes;
 
       Color badgeColor;
       String badgeText;
@@ -129,20 +128,51 @@ class _ContratosScreenState extends State<ContratosScreen> {
         badgeText = '$diasRestantes días';
       }
 
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: badgeColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          badgeText,
-          style: TextStyle(
-            color: badgeColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 11,
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (contrato.isAutoProjected) ...[
+            Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3), width: 1),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.autorenew_rounded, size: 12, color: Color(0xFF6366F1)),
+                  SizedBox(width: 3),
+                  Text(
+                    'Renovación Auto',
+                    style: TextStyle(
+                      color: Color(0xFF6366F1),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: badgeColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              badgeText,
+              style: TextStyle(
+                color: badgeColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+              ),
+            ),
           ),
-        ),
+        ],
       );
     } catch (_) {
       return const SizedBox.shrink();
@@ -171,10 +201,23 @@ class _ContratosScreenState extends State<ContratosScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.swap_vert_rounded, color: Color(0xFF2563EB)),
-                  tooltip: 'Criterio de Ordenación',
-                  onPressed: () => _showSortModal(provider),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.swap_vert_rounded, color: Colors.white, size: 22),
+                    tooltip: 'Criterio de Ordenación',
+                    onPressed: () => _showSortModal(provider),
+                  ),
                 ),
               ],
             ),
@@ -422,7 +465,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildStatusBadge(contrato.fechaFin),
+                  _buildStatusBadge(contrato),
                 ],
               ),
               const SizedBox(height: 10),
@@ -499,12 +542,30 @@ class _ContratosScreenState extends State<ContratosScreen> {
                       Icon(Icons.calendar_today_rounded, size: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       const SizedBox(width: 4),
                       Text(
-                        'Vence: ${AppFormatters.date(contrato.fechaFin)}',
+                        'Vence: ${AppFormatters.date(contrato.fechaFinEffective)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
                       ),
+                      if (contrato.aniosAntiguedad > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${contrato.aniosAntiguedad} ${contrato.aniosAntiguedad == 1 ? 'año' : 'años'} antig.',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   Column(

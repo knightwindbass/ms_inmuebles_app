@@ -148,9 +148,11 @@ class InmueblesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final isFilterTerreno = _selectedTipo?.toLowerCase() == 'terreno';
       _inmuebles = await _repository.getInmuebles(
         estado: _selectedEstado,
         tipo: _selectedTipo,
+        excludeTipo: isFilterTerreno ? null : 'Terreno',
         buscar: _searchQuery.isNotEmpty ? _searchQuery : null,
         propietario: _selectedPropietario,
         padreId: _selectedPadreId,

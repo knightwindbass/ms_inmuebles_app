@@ -140,8 +140,8 @@ class _InmueblesScreenState extends State<InmueblesScreen> {
                   );
                 }),
                 const SizedBox(width: 8),
-                // Filtros de Tipología (f_tipo)
-                ...ApiConstants.tiposInmueble.map((tipo) {
+                // Filtros de Tipología Comercial (f_tipo - excluye Terreno por aislamiento de Land Banking)
+                ...ApiConstants.tiposInmueble.where((t) => t.toLowerCase() != 'terreno').map((tipo) {
                   final isSelected = provider.selectedTipo?.toLowerCase() == tipo.toLowerCase();
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),

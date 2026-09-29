@@ -638,6 +638,65 @@ void main() {
       });
       expect(desglose.valorTotal, equals(4500000.0));
     });
+
+    test('ContratoModel maneja contratos con Renovación Automática y fechas proyectadas', () {
+      final jsonAutoRenovado = {
+        'id': 120,
+        'numero_contrato': 'AUTO-2020-01',
+        'fecha_inicio': '2020-01-01',
+        'fecha_fin': '2021-01-01', // Fecha física original (hace años)
+        'fecha_fin_real': '2027-01-01', // Ciclo actual proyectado matemáticamente por backend
+        'is_auto_projected': true,
+        'valor_pactado': 1800.0,
+        'frecuencia_pago': 'mensual',
+        'estado': 'vigente',
+        'inquilino': 'Empresa Vital S.A.',
+      };
+
+      final contrato = ContratoModel.fromJson(jsonAutoRenovado);
+
+      expect(contrato.isAutoProjected, isTrue);
+      expect(contrato.fechaFinReal, equals('2027-01-01'));
+      expect(contrato.fechaFinEffective, equals('2027-01-01'));
+      // No debe estar vencido porque usa fechaFinReal (2027)
+      expect(contrato.diasRestantes, greaterThan(0));
+      // Antigüedad continua calculada desde 2020 contra DateTime.now()
+      expect(contrato.aniosAntiguedad, greaterThanOrEqualTo(6));
+    });
+
+    test('ContratoModel usa fechaFin normal como fallback cuando no hay fechaFinReal', () {
+      final jsonNormal = {
+        'id': 121,
+        'numero_contrato': 'NORM-2025-01',
+        'fecha_inicio': '2025-01-01',
+        'fecha_fin': '2026-06-30',
+        'valor_pactado': 1200.0,
+        'frecuencia_pago': 'mensual',
+        'estado': 'vigente',
+        'inquilino': 'Cliente Normal',
+      };
+
+      final contrato = ContratoModel.fromJson(jsonNormal);
+
+      expect(contrato.isAutoProjected, isFalse);
+      expect(contrato.fechaFinReal, isNull);
+      expect(contrato.fechaFinEffective, equals('2026-06-30'));
+    });
+
+    test('InmueblesRepository y InmueblesProvider aíslan Terreno pasando exclude_tipo', () async {
+      final fakeRepo = _RecordingFakeInmueblesRepository();
+      final provider = InmueblesProvider(fakeRepo);
+
+      await provider.fetchInmuebles();
+
+      // Debe pasar excludeTipo: 'Terreno' para aislar Land Banking del inventario comercial
+      expect(fakeRepo.lastExcludeTipo, equals('Terreno'));
+
+      // Si se filtra específicamente por Terreno, no debe excluirlo
+      provider.setTipoFilter('Terreno');
+      expect(fakeRepo.lastExcludeTipo, isNull);
+      expect(fakeRepo.lastTipo, equals('Terreno'));
+    });
   });
 }
 
@@ -649,12 +708,36 @@ class _FakeInmueblesRepository implements InmueblesRepository {
   Future<List<InmuebleModel>> getInmuebles({
     String? estado,
     String? tipo,
+    String? excludeTipo,
     String? buscar,
     String? propietario,
     int? padreId,
     String? orden,
   }) async {
     return mockList;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _RecordingFakeInmueblesRepository implements InmueblesRepository {
+  String? lastExcludeTipo;
+  String? lastTipo;
+
+  @override
+  Future<List<InmuebleModel>> getInmuebles({
+    String? estado,
+    String? tipo,
+    String? excludeTipo,
+    String? buscar,
+    String? propietario,
+    int? padreId,
+    String? orden,
+  }) async {
+    lastExcludeTipo = excludeTipo;
+    lastTipo = tipo;
+    return [];
   }
 
   @override

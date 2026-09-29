@@ -654,14 +654,22 @@ class _InquilinoDetailSheet extends StatelessWidget {
                               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            c.fechaFin.isNotEmpty ? c.fechaFin : 'Indefinido',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (c.isAutoProjected) ...[
+                                const Icon(Icons.autorenew_rounded, size: 12, color: Color(0xFF6366F1)),
+                                const SizedBox(width: 2),
+                              ],
+                              Text(
+                                c.fechaFinEffective.isNotEmpty ? AppFormatters.date(c.fechaFinEffective) : 'Indefinido',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

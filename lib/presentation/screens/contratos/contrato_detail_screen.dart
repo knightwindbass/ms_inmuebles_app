@@ -315,17 +315,53 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Vigencia del Contrato',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Vigencia del Contrato',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                                ),
+                                if (item.isAutoProjected)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3), width: 1),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.autorenew_rounded, size: 13, color: Color(0xFF6366F1)),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Renovación Auto',
+                                          style: TextStyle(
+                                            color: Color(0xFF6366F1),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 14),
                             _buildRow(Icons.event_available_rounded, 'Fecha de Inicio', AppFormatters.date(item.fechaInicio), isDark),
-                            _buildRow(Icons.event_busy_rounded, 'Fecha de Vencimiento', AppFormatters.date(item.fechaFin), isDark),
+                            if (item.isAutoProjected && item.fechaFinReal != null && item.fechaFinReal!.isNotEmpty) ...[
+                              _buildRow(Icons.history_rounded, 'Vence Original', AppFormatters.date(item.fechaFin), isDark),
+                              _buildRow(Icons.update_rounded, 'Ciclo Proyectado', AppFormatters.date(item.fechaFinEffective), isDark),
+                            ] else ...[
+                              _buildRow(Icons.event_busy_rounded, 'Fecha de Vencimiento', AppFormatters.date(item.fechaFinEffective), isDark),
+                            ],
+                            if (item.aniosAntiguedad > 0)
+                              _buildRow(Icons.timeline_rounded, 'Antigüedad', '${item.aniosAntiguedad} ${item.aniosAntiguedad == 1 ? 'año' : 'años'} continuos', isDark),
                             _buildRow(
                               Icons.hourglass_bottom_rounded,
                               'Tiempo Restante',
-                              '${item.diasRestantes} días',
+                              item.diasRestantes <= 0 ? 'Vencido (${item.diasRestantes.abs()} días)' : '${item.diasRestantes} días',
                               isDark,
                             ),
                             if (item.observaciones != null && item.observaciones!.isNotEmpty) ...[
