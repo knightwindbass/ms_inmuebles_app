@@ -107,6 +107,15 @@ class ContratoModel {
     return clean == 'vigente' || clean == 'activo' || clean == 'activa';
   }
 
+  /// Indica si el contrato ha concluido o expirado acorde a su fecha efectiva o estado
+  bool get isExpirado {
+    final clean = estado.trim().toLowerCase();
+    if (clean == 'expirado' || clean == 'concluido' || clean == 'finalizado' || clean == 'terminado') {
+      return true;
+    }
+    return diasRestantes <= 0;
+  }
+
   /// Cantidad de unidades o inmuebles bajo este contrato
   int get cantidadInmuebles => inmueblesAsociados.isNotEmpty
       ? inmueblesAsociados.length

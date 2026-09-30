@@ -66,7 +66,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.timer_rounded),
-                title: const Text('Próximos a vencer (vencimiento_asc)'),
+                title: const Text('Próximos a expirar (vencimiento_asc)'),
                 trailing: provider.selectedOrden == ApiConstants.ordenVencimientoAsc
                     ? const Icon(Icons.check_rounded, color: Color(0xFF2563EB))
                     : null,
@@ -115,11 +115,11 @@ class _ContratosScreenState extends State<ContratosScreen> {
       String badgeText;
 
       if (diasRestantes <= 0) {
-        // Vencido (Rojo/Naranja Fuerte)
+        // Expirado (Rojo/Naranja Fuerte)
         badgeColor = const Color(0xFFEF4444);
-        badgeText = 'Vencido (${diasRestantes.abs()}d)';
+        badgeText = diasRestantes == 0 ? 'Expiró hoy' : 'Expirado (${diasRestantes.abs()}d)';
       } else if (diasRestantes <= 60) {
-        // Alerta Naranja (Próximo a vencer en <= 60 días)
+        // Alerta Naranja (Próximo a expirar en <= 60 días)
         badgeColor = const Color(0xFFF59E0B);
         badgeText = '$diasRestantes días';
       } else {
@@ -300,7 +300,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        // Tarjeta Alerta de Renovación (Vencen en <= 60 días)
+        // Tarjeta Alerta de Renovación (Expiran en <= 60 días)
         Card(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -325,8 +325,8 @@ class _ContratosScreenState extends State<ContratosScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        provider.porVencer > 0
-                            ? '${provider.porVencer} contrato(s) requieren atención próxima'
+                        provider.porExpirar > 0
+                            ? '${provider.porExpirar} contrato(s) por expirar requieren atención próxima'
                             : 'Todos los contratos tienen más de 60 días de vigencia',
                         style: TextStyle(
                           fontSize: 11,
@@ -339,17 +339,17 @@ class _ContratosScreenState extends State<ContratosScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: provider.porVencer > 0
+                    color: provider.porExpirar > 0
                         ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
                         : const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${provider.porVencer}',
+                    '${provider.porExpirar}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: provider.porVencer > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                      color: provider.porExpirar > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
                     ),
                   ),
                 ),
@@ -542,7 +542,7 @@ class _ContratosScreenState extends State<ContratosScreen> {
                       Icon(Icons.calendar_today_rounded, size: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       const SizedBox(width: 4),
                       Text(
-                        'Vence: ${AppFormatters.date(contrato.fechaFinEffective)}',
+                        'Expira: ${AppFormatters.date(contrato.fechaFinEffective)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),

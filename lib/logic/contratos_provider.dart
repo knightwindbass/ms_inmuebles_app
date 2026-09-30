@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/models/contrato_model.dart';
 import '../data/repositories/contratos_repository.dart';
 
-/// Proveedor de estado para el módulo de contratos, con cálculo en tiempo real de MRR y Alertas de Vencimiento.
+/// Proveedor de estado para el módulo de contratos, con cálculo en tiempo real de MRR y Alertas de Expiración.
 class ContratosProvider extends ChangeNotifier {
   final ContratosRepository _repository;
 
@@ -41,8 +41,8 @@ class ContratosProvider extends ChangeNotifier {
     return total;
   }
 
-  /// Cantidad de contratos vigentes que vencen en 60 días o menos (Alerta de Renovación)
-  int get porVencer {
+  /// Cantidad de contratos vigentes que expiran en 60 días o menos (Alerta de Renovación)
+  int get porExpirar {
     int count = 0;
     for (final c in _contratos) {
       if (c.isVigente) {
@@ -54,6 +54,9 @@ class ContratosProvider extends ChangeNotifier {
     }
     return count;
   }
+
+  /// Alias de porExpirar para compatibilidad
+  int get porVencer => porExpirar;
 
   Future<void> fetchContratos() async {
     _isLoading = true;

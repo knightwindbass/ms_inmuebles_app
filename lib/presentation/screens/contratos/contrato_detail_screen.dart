@@ -351,17 +351,19 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
                             const SizedBox(height: 14),
                             _buildRow(Icons.event_available_rounded, 'Fecha de Inicio', AppFormatters.date(item.fechaInicio), isDark),
                             if (item.isAutoProjected && item.fechaFinReal != null && item.fechaFinReal!.isNotEmpty) ...[
-                              _buildRow(Icons.history_rounded, 'Vence Original', AppFormatters.date(item.fechaFin), isDark),
+                              _buildRow(Icons.history_rounded, 'Expiración Original', AppFormatters.date(item.fechaFin), isDark),
                               _buildRow(Icons.update_rounded, 'Ciclo Proyectado', AppFormatters.date(item.fechaFinEffective), isDark),
                             ] else ...[
-                              _buildRow(Icons.event_busy_rounded, 'Fecha de Vencimiento', AppFormatters.date(item.fechaFinEffective), isDark),
+                              _buildRow(Icons.event_busy_rounded, 'Fecha de Expiración', AppFormatters.date(item.fechaFinEffective), isDark),
                             ],
                             if (item.aniosAntiguedad > 0)
                               _buildRow(Icons.timeline_rounded, 'Antigüedad', '${item.aniosAntiguedad} ${item.aniosAntiguedad == 1 ? 'año' : 'años'} continuos', isDark),
                             _buildRow(
                               Icons.hourglass_bottom_rounded,
                               'Tiempo Restante',
-                              item.diasRestantes <= 0 ? 'Vencido (${item.diasRestantes.abs()} días)' : '${item.diasRestantes} días',
+                              item.diasRestantes <= 0
+                                  ? (item.diasRestantes == 0 ? 'Expiró hoy' : 'Expirado hace ${item.diasRestantes.abs()} días')
+                                  : '${item.diasRestantes} días restantes',
                               isDark,
                             ),
                             if (item.observaciones != null && item.observaciones!.isNotEmpty) ...[

@@ -648,7 +648,7 @@ class _InquilinoDetailSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Vencimiento',
+                            'Expiración',
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),

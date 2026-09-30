@@ -658,10 +658,28 @@ void main() {
       expect(contrato.isAutoProjected, isTrue);
       expect(contrato.fechaFinReal, equals('2027-01-01'));
       expect(contrato.fechaFinEffective, equals('2027-01-01'));
-      // No debe estar vencido porque usa fechaFinReal (2027)
+      // No debe estar expirado porque usa fechaFinReal (2027)
       expect(contrato.diasRestantes, greaterThan(0));
+      expect(contrato.isExpirado, isFalse);
       // Antigüedad continua calculada desde 2020 contra DateTime.now()
       expect(contrato.aniosAntiguedad, greaterThanOrEqualTo(6));
+    });
+
+    test('ContratoModel reconoce correctamente un contrato expirado al concluir su vigencia', () {
+      final jsonExpirado = {
+        'id': 122,
+        'numero_contrato': 'EXP-2020-01',
+        'fecha_inicio': '2020-01-01',
+        'fecha_fin': '2021-01-01',
+        'valor_pactado': 1000.0,
+        'frecuencia_pago': 'mensual',
+        'estado': 'vigente',
+        'inquilino': 'Inquilino Pasado',
+      };
+
+      final contrato = ContratoModel.fromJson(jsonExpirado);
+      expect(contrato.diasRestantes, lessThan(0));
+      expect(contrato.isExpirado, isTrue);
     });
 
     test('ContratoModel usa fechaFin normal como fallback cuando no hay fechaFinReal', () {
