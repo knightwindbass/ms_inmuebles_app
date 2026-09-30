@@ -16,6 +16,9 @@ workflows:
       - name: Instalar dependencias de Flutter
         script: |
           flutter pub get
+      - name: Ejecutar pruebas unitarias
+        script: |
+          flutter test
       - name: Configurar firma de código automática
         script: |
           xcode-project use-profiles
@@ -30,3 +33,24 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+
+  android-release:
+    name: Android Release (APK & AAB)
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Instalar dependencias de Flutter
+        script: |
+          flutter pub get
+      - name: Ejecutar pruebas unitarias
+        script: |
+          flutter test
+      - name: Compilar APK y App Bundle Release
+        script: |
+          flutter build apk --release
+          flutter build appbundle --release
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
