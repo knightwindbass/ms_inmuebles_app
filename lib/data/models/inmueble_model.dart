@@ -91,9 +91,9 @@ class InmuebleModel {
       enlaceGoogleMaps: json['enlace_google_maps']?.toString() ?? json['maps_url']?.toString(),
       galeria: _toList(json['galeria']).map((e) => e.toString()).toList(),
       contratos: ContratoModel.groupContratos(
-        _toList(json['contratos'])
-            .whereType<Map<String, dynamic>>()
-            .map((e) => ContratoModel.fromJson(e))
+        _toList(json['contratos'] ?? json['historial_contratos'] ?? json['contratos_historial'] ?? json['contratos_asociados'])
+            .whereType<Map>()
+            .map((e) => ContratoModel.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
       ),
       subunidades: _toList(json['subunidades'])

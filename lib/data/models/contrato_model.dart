@@ -389,27 +389,104 @@ class ContratoModel {
 
   factory ContratoModel.fromJson(Map<String, dynamic> json) {
     // Inquilino puede venir como String simple o como Map
-    String inquilinoName = 'Inquilino';
+    String inquilinoName = '';
     String? inqIden;
     String? inqEmail;
     String? inqTel;
 
-    if (json['inquilino'] is String && json['inquilino'].toString().isNotEmpty) {
-      inquilinoName = json['inquilino'].toString();
-    } else if (json['inquilino'] is Map) {
-      inquilinoName = json['inquilino']['nombres_razon_social']?.toString() ??
-          json['inquilino']['nombre']?.toString() ??
-          'Inquilino';
-      inqIden = json['inquilino']['identificacion']?.toString();
-      inqEmail = json['inquilino']['email']?.toString();
-      inqTel = json['inquilino']['telefono']?.toString();
-    } else if (json['nombres_inquilino'] != null) {
-      inquilinoName = json['nombres_inquilino'].toString();
+    bool isValidTenantName(String? name) {
+      if (name == null) return false;
+      final t = name.trim();
+      if (t.isEmpty || t.toLowerCase() == 'inquilino' || t.toLowerCase() == 'null' || t.toLowerCase() == 'undefined') {
+        return false;
+      }
+      if (int.tryParse(t) != null) return false;
+      return true;
     }
 
-    inqIden ??= json['identificacion_inquilino']?.toString() ?? json['identificacion']?.toString();
-    inqEmail ??= json['email_inquilino']?.toString();
-    inqTel ??= json['telefono_inquilino']?.toString();
+    if (json['inquilino'] is Map) {
+      final inqMap = json['inquilino'] as Map;
+      final cand = inqMap['nombres_razon_social']?.toString() ??
+          inqMap['razon_social']?.toString() ??
+          inqMap['nombre']?.toString() ??
+          inqMap['nombre_completo']?.toString() ??
+          inqMap['display_name']?.toString() ??
+          inqMap['name']?.toString() ??
+          inqMap['nombres']?.toString();
+      if (isValidTenantName(cand)) {
+        inquilinoName = cand!.trim();
+      }
+      inqIden = inqMap['identificacion']?.toString() ?? inqMap['cedula']?.toString() ?? inqMap['ruc']?.toString();
+      inqEmail = inqMap['email']?.toString() ?? inqMap['correo']?.toString();
+      inqTel = inqMap['telefono']?.toString() ?? inqMap['celular']?.toString();
+    } else if (json['inquilino'] is String && isValidTenantName(json['inquilino'].toString())) {
+      inquilinoName = json['inquilino'].toString().trim();
+    }
+
+    if (!isValidTenantName(inquilinoName)) {
+      final candidates = [
+        json['nombres_inquilino'],
+        json['inquilino_nombre'],
+        json['nombre_inquilino'],
+        json['inquilino_nombres'],
+        json['inquilino_razon_social'],
+        json['razon_social'],
+        json['cliente_nombre'],
+        json['nombre_cliente'],
+        json['arrendatario_nombre'],
+        json['arrendatario_razon_social'],
+        json['empresa'],
+      ];
+      for (final c in candidates) {
+        if (isValidTenantName(c?.toString())) {
+          inquilinoName = c!.toString().trim();
+          break;
+        }
+      }
+    }
+
+    if (!isValidTenantName(inquilinoName)) {
+      if (json['cliente'] is Map) {
+        final clMap = json['cliente'] as Map;
+        final cand = clMap['nombres_razon_social']?.toString() ??
+            clMap['razon_social']?.toString() ??
+            clMap['nombre']?.toString() ??
+            clMap['display_name']?.toString();
+        if (isValidTenantName(cand)) inquilinoName = cand!.trim();
+        inqIden ??= clMap['identificacion']?.toString() ?? clMap['cedula']?.toString() ?? clMap['ruc']?.toString();
+        inqEmail ??= clMap['email']?.toString() ?? clMap['correo']?.toString();
+        inqTel ??= clMap['telefono']?.toString() ?? clMap['celular']?.toString();
+      } else if (json['cliente'] is String && isValidTenantName(json['cliente'].toString())) {
+        inquilinoName = json['cliente'].toString().trim();
+      }
+    }
+
+    if (!isValidTenantName(inquilinoName)) {
+      if (json['arrendatario'] is Map) {
+        final arrMap = json['arrendatario'] as Map;
+        final cand = arrMap['nombres_razon_social']?.toString() ??
+            arrMap['razon_social']?.toString() ??
+            arrMap['nombre']?.toString() ??
+            arrMap['display_name']?.toString();
+        if (isValidTenantName(cand)) inquilinoName = cand!.trim();
+        inqIden ??= arrMap['identificacion']?.toString() ?? arrMap['cedula']?.toString() ?? arrMap['ruc']?.toString();
+        inqEmail ??= arrMap['email']?.toString() ?? arrMap['correo']?.toString();
+        inqTel ??= arrMap['telefono']?.toString() ?? arrMap['celular']?.toString();
+      } else if (json['arrendatario'] is String && isValidTenantName(json['arrendatario'].toString())) {
+        inquilinoName = json['arrendatario'].toString().trim();
+      }
+    }
+
+    if (inquilinoName.isEmpty) {
+      inquilinoName = 'Inquilino';
+    }
+
+    inqIden ??= json['identificacion_inquilino']?.toString() ??
+        json['identificacion']?.toString() ??
+        json['cedula']?.toString() ??
+        json['ruc']?.toString();
+    inqEmail ??= json['email_inquilino']?.toString() ?? json['email']?.toString();
+    inqTel ??= json['telefono_inquilino']?.toString() ?? json['telefono']?.toString();
 
     // Inmueble nombre
     String? inmName;
@@ -422,15 +499,36 @@ class ContratoModel {
     }
 
     final parsedId = _toInt(json['id'] ?? json['id_contrato'] ?? json['contrato_id']);
-    final parsedNumero = json['numero_contrato']?.toString() ?? json['referencia']?.toString() ?? json['codigo']?.toString();
+    final parsedNumero = json['numero_contrato']?.toString() ??
+        json['referencia']?.toString() ??
+        json['codigo']?.toString() ??
+        json['numero']?.toString() ??
+        json['num_contrato']?.toString() ??
+        json['contrato_numero']?.toString() ??
+        json['contrato_ref']?.toString() ??
+        json['cod_contrato']?.toString() ??
+        json['ref']?.toString() ??
+        json['secuencial']?.toString() ??
+        json['nro_contrato']?.toString() ??
+        json['nro']?.toString() ??
+        json['codigo_contrato']?.toString();
     final parsedMonto = _toDouble(json['valor_pactado'] ?? json['monto'] ?? json['canon'] ?? json['renta']);
     final parsedMetraje = json['metraje'] != null ? _toDouble(json['metraje']) : null;
     final parsedInmuebleId = json['inmueble_id'] != null ? _toInt(json['inmueble_id']) : null;
-    final parsedInquilinoId = json['inquilino_id'] != null
-        ? _toInt(json['inquilino_id'])
-        : (json['inquilino'] is Map && json['inquilino']['id'] != null
-            ? _toInt(json['inquilino']['id'])
-            : null);
+    int? parsedInquilinoId;
+    if (json['inquilino_id'] != null) {
+      parsedInquilinoId = _toInt(json['inquilino_id']);
+    } else if (json['id_inquilino'] != null) {
+      parsedInquilinoId = _toInt(json['id_inquilino']);
+    } else if (json['inquilino'] is num) {
+      parsedInquilinoId = (json['inquilino'] as num).toInt();
+    } else if (json['inquilino'] is String && int.tryParse(json['inquilino'].toString()) != null) {
+      parsedInquilinoId = int.tryParse(json['inquilino'].toString());
+    } else if (json['inquilino'] is Map && json['inquilino']['id'] != null) {
+      parsedInquilinoId = _toInt(json['inquilino']['id']);
+    } else if (json['cliente_id'] != null) {
+      parsedInquilinoId = _toInt(json['cliente_id']);
+    }
 
     final List<ContratoInmuebleInfo> itemsAsociados = [];
     final rawInmuebles = json['inmuebles'] ?? json['propiedades'] ?? json['unidades'];

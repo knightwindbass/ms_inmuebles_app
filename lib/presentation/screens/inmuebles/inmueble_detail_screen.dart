@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/contrato_model.dart';
 import '../../../data/models/inmueble_model.dart';
+import '../../../data/models/inquilino_model.dart';
+import '../../../logic/contratos_provider.dart';
 import '../../../logic/inmuebles_provider.dart';
+import '../../../logic/inquilinos_provider.dart';
 import '../../widgets/status_badge.dart';
+import '../contratos/contrato_detail_screen.dart';
 
 /// Ficha técnica detallada del inmueble con historial de contratos (/inmuebles/{id}).
 class InmuebleDetailScreen extends StatefulWidget {
@@ -42,7 +47,22 @@ class _InmuebleDetailScreenState extends State<InmuebleDetailScreen> with Single
   Future<void> _fetchDetail() async {
     setState(() => _isLoading = true);
     final provider = Provider.of<InmueblesProvider>(context, listen: false);
-    final result = await provider.getDetalle(widget.inmuebleId);
+    final contratosProvider = Provider.of<ContratosProvider>(context, listen: false);
+    final inquilinosProvider = Provider.of<InquilinosProvider>(context, listen: false);
+
+    // Cargar detalle del inmueble y precargar catálogos si aún están vacíos
+    final futures = <Future>[
+      provider.getDetalle(widget.inmuebleId),
+    ];
+    if (contratosProvider.todosLosContratos.isEmpty) {
+      futures.add(contratosProvider.fetchContratos().catchError((_) {}));
+    }
+    if (inquilinosProvider.todosLosInquilinos.isEmpty) {
+      futures.add(inquilinosProvider.fetchInquilinos().catchError((_) {}));
+    }
+
+    final results = await Future.wait(futures);
+    final result = results[0] as InmuebleModel?;
 
     if (!mounted) return;
     setState(() {
@@ -51,6 +71,62 @@ class _InmuebleDetailScreenState extends State<InmuebleDetailScreen> with Single
       }
       _isLoading = false;
     });
+  }
+
+  /// Resuelve la información completa del inquilino y referencia del contrato
+  /// cruzando datos locales con el catálogo global en memoria.
+  ContratoModel _resolveContrato(ContratoModel c) {
+    var resolved = c;
+
+    // 1. Cruzar con el catálogo de Contratos por ID o número de contrato
+    try {
+      final contratosProvider = Provider.of<ContratosProvider>(context, listen: false);
+      final matchInContratos = contratosProvider.todosLosContratos.cast<ContratoModel?>().firstWhere(
+        (tc) => tc != null && (
+          (tc.id > 0 && tc.id == c.id) ||
+          (tc.numeroContrato != null &&
+              c.numeroContrato != null &&
+              tc.numeroContrato!.trim().toLowerCase() == c.numeroContrato!.trim().toLowerCase())
+        ),
+        orElse: () => null,
+      );
+
+      if (matchInContratos != null) {
+        resolved = resolved.mergeWith(matchInContratos);
+      }
+    } catch (_) {}
+
+    // 2. Cruzar con el catálogo de Inquilinos si el nombre aún es 'Inquilino' o está vacío
+    final isGenericTenant = resolved.nombresInquilino.isEmpty ||
+        resolved.nombresInquilino.trim().toLowerCase() == 'inquilino';
+
+    if (isGenericTenant) {
+      try {
+        final inquilinosProvider = Provider.of<InquilinosProvider>(context, listen: false);
+        final matchInInquilinos = inquilinosProvider.todosLosInquilinos.cast<InquilinoModel?>().firstWhere(
+          (inq) => inq != null && (
+            (resolved.inquilinoId != null && resolved.inquilinoId! > 0 && inq.id == resolved.inquilinoId) ||
+            (resolved.identificacionInquilino != null &&
+                resolved.identificacionInquilino!.trim().isNotEmpty &&
+                inq.identificacion.trim() == resolved.identificacionInquilino!.trim())
+          ),
+          orElse: () => null,
+        );
+
+        if (matchInInquilinos != null && matchInInquilinos.nombresRazonSocial.isNotEmpty) {
+          resolved = resolved.copyWith(
+            nombresInquilino: matchInInquilinos.nombresRazonSocial,
+            identificacionInquilino: (resolved.identificacionInquilino != null && resolved.identificacionInquilino!.isNotEmpty)
+                ? resolved.identificacionInquilino
+                : matchInInquilinos.identificacion,
+            emailInquilino: resolved.emailInquilino ?? matchInInquilinos.email,
+            telefonoInquilino: resolved.telefonoInquilino ?? matchInInquilinos.telefono,
+          );
+        }
+      } catch (_) {}
+    }
+
+    return resolved;
   }
 
   @override
@@ -255,44 +331,225 @@ class _InmuebleDetailScreenState extends State<InmuebleDetailScreen> with Single
       padding: const EdgeInsets.all(16),
       itemCount: item.contratos.length,
       itemBuilder: (context, index) {
-        final contrato = item.contratos[index];
+        final rawContrato = item.contratos[index];
+        final contrato = _resolveContrato(rawContrato);
+
+        final String refLabel = (contrato.numeroContrato != null && contrato.numeroContrato!.trim().isNotEmpty)
+            ? contrato.numeroContrato!.trim()
+            : (contrato.id > 0 ? 'CTR-${contrato.id}' : 'Contrato #${index + 1}');
+
+        final bool isAuto = contrato.isAutoProjected;
+        final int anios = contrato.aniosAntiguedad;
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      contrato.nombresInquilino,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: contrato.id > 0
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ContratoDetailScreen(
+                          contratoId: contrato.id,
+                          initialContrato: contrato,
+                        ),
                       ),
-                    ),
-                    Text(
-                      AppFormatters.currency(contrato.valorPactado),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF10B981),
+                    );
+                  }
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Fila 1: Referencia/Número + Estado + Canon de Renta
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Badge de Referencia / Número de Contrato
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.35 : 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.tag_rounded,
+                              size: 13,
+                              color: Color(0xFF2563EB),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              refLabel,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Vigencia: ${AppFormatters.date(contrato.fechaInicio)} - ${AppFormatters.date(contrato.fechaFin)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      const SizedBox(width: 8),
+                      // Badge de Estado
+                      StatusBadge(status: contrato.estado, isSmall: true),
+                      const Spacer(),
+                      // Monto de Renta
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            AppFormatters.currency(contrato.valorPactado),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          Text(
+                            contrato.frecuenciaPago == 'anual' ? '/ año' : '/ mes',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+
+                  // Fila 2: Inquilino Real + RUC/Identificación
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          size: 18,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              contrato.nombresInquilino,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            if (contrato.identificacionInquilino != null &&
+                                contrato.identificacionInquilino!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Identificación: ${contrato.identificacionInquilino}',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (contrato.id > 0)
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Fila 3: Vigencia y Badges (Auto-renovación / Antigüedad)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.date_range_rounded,
+                        size: 14,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Vigencia: ${AppFormatters.date(contrato.fechaInicio)} al ${AppFormatters.date(contrato.fechaFinEffective)}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isAuto) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.autorenew_rounded, size: 11, color: Color(0xFF6366F1)),
+                              SizedBox(width: 3),
+                              Text(
+                                'Renov. Auto',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6366F1),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (anios > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '$anios a. antig.',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

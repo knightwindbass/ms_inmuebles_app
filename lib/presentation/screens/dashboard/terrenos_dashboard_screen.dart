@@ -28,6 +28,8 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _touchedIndex = -1;
   bool _isAreaMode = false;
+  bool _groupByCiudad = false;
+  bool _showAllUbicaciones = false;
 
   // Paleta de colores oficial para Land Banking
   static const Color colorDisponible = Color(0xFF3B82F6); // Azul
@@ -215,9 +217,14 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
           // 3. GRÁFICO DE DONA: ESTADO DEL BANCO DE TIERRAS (Lotes o Área m²)
           _buildDonutChartCard(desglose, volumenTotal, isDark),
 
+          const SizedBox(height: 18),
+
+          // 4. MÉTRICA DE ÁREA POR DIRECCIÓN / UBICACIÓN (RANKING TERRITORIAL)
+          _buildAreaPorUbicacionSection(isDark),
+
           const SizedBox(height: 20),
 
-          // 4. SECCIÓN DE INVENTARIO DE TERRENOS
+          // 5. SECCIÓN DE INVENTARIO DE TERRENOS
           _buildTerrenosSection(isDark),
         ],
       ),
@@ -902,7 +909,435 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     );
   }
 
-  /// 3. Listado de Terrenos con Buscador y Estados Individuales
+  /// 4. Métrica de Área por Dirección / Ubicación (Ranking Territorial m²)
+  Widget _buildAreaPorUbicacionSection(bool isDark) {
+    final metrics = _computeAreaPorUbicacion(porCiudad: _groupByCiudad);
+    final int displayCount = _showAllUbicaciones ? metrics.length : (metrics.length > 4 ? 4 : metrics.length);
+    final displayedList = metrics.take(displayCount).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cabecera: Título y Selector de Dirección o Ciudad
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.map_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Área por Ubicación',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Concentración de m² por ${_groupByCiudad ? "ciudad" : "dirección"}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Selector visual: Dirección / Ciudad
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildUbicacionToggleItem(
+                      label: 'Dirección',
+                      isSelected: !_groupByCiudad,
+                      onTap: () {
+                        if (_groupByCiudad) setState(() => _groupByCiudad = false);
+                      },
+                      isDark: isDark,
+                    ),
+                    _buildUbicacionToggleItem(
+                      label: 'Ciudad',
+                      isSelected: _groupByCiudad,
+                      onTap: () {
+                        if (!_groupByCiudad) setState(() => _groupByCiudad = true);
+                      },
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (metrics.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'No hay terrenos con metraje o ubicación registrados',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            )
+          else ...[
+            // Filas de Ubicaciones ordenadas de mayor a menor superficie
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayedList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final item = displayedList[index];
+                return _buildUbicacionRow(item, index + 1, isDark);
+              },
+            ),
+
+            // Botón Expandir / Colapsar
+            if (metrics.length > 4) ...[
+              const SizedBox(height: 10),
+              Center(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    setState(() => _showAllUbicaciones = !_showAllUbicaciones);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _showAllUbicaciones
+                              ? 'Ver menos'
+                              : 'Ver las ${metrics.length} ubicaciones',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _showAllUbicaciones
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          size: 16,
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUbicacionToggleItem({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? const Color(0xFF334155) : Colors.white)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUbicacionRow(_UbicacionAreaMetric item, int rank, bool isDark) {
+    Color rankColor;
+    Color rankBg;
+
+    if (rank == 1) {
+      rankColor = const Color(0xFFD97706);
+      rankBg = const Color(0xFFF59E0B).withValues(alpha: 0.15);
+    } else if (rank == 2) {
+      rankColor = const Color(0xFF475569);
+      rankBg = const Color(0xFF64748B).withValues(alpha: 0.15);
+    } else if (rank == 3) {
+      rankColor = const Color(0xFFB45309);
+      rankBg = const Color(0xFFD97706).withValues(alpha: 0.12);
+    } else {
+      rankColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+      rankBg = isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        _searchController.text = item.titulo;
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Filtrando inventario por: ${item.titulo}'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.4) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Badge de Posición / Ranking
+                Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: rankBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$rank',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: rankColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                // Título de la Ubicación y Subtítulo
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.titulo,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        '${item.subtitulo != null && item.subtitulo!.isNotEmpty ? "${item.subtitulo} · " : ""}${item.cantidadTerrenos} lote${item.cantidadTerrenos == 1 ? "" : "s"}',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Metraje total en m² y porcentaje
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      AppFormatters.area(item.areaM2),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${item.porcentajeDelTotal.toStringAsFixed(1)}% de reserva',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Barra visual de porcentaje relativo
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                height: 5,
+                child: LinearProgressIndicator(
+                  value: (item.porcentajeDelTotal / 100).clamp(0.01, 1.0),
+                  backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    rank == 1
+                        ? const Color(0xFF2563EB)
+                        : (rank == 2
+                            ? const Color(0xFF3B82F6)
+                            : (rank == 3 ? const Color(0xFF60A5FA) : const Color(0xFF93C5FD))),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<_UbicacionAreaMetric> _computeAreaPorUbicacion({required bool porCiudad}) {
+    if (_terrenos.isEmpty) return [];
+
+    final double totalArea = _terrenos.fold(0.0, (acc, t) => acc + (t.metraje ?? 0.0));
+    final Map<String, _TempUbicacionData> groups = {};
+
+    for (final t in _terrenos) {
+      final double area = t.metraje ?? 0.0;
+      final double val = t.valorRentaBase > 0 ? t.valorRentaBase : 0.0;
+
+      String key;
+      String? sub;
+
+      if (porCiudad) {
+        final c = (t.ciudad != null && t.ciudad!.trim().isNotEmpty) ? t.ciudad!.trim() : 'Sin ciudad';
+        final p = (t.provincia != null && t.provincia!.trim().isNotEmpty) ? t.provincia!.trim() : '';
+        key = c;
+        sub = p.isNotEmpty ? p : null;
+      } else {
+        final d = (t.direccion != null && t.direccion!.trim().isNotEmpty) ? t.direccion!.trim() : null;
+        if (d != null) {
+          key = d;
+          final c = (t.ciudad != null && t.ciudad!.trim().isNotEmpty) ? t.ciudad!.trim() : '';
+          sub = c.isNotEmpty ? c : (t.provincia ?? '');
+        } else {
+          final c = (t.ciudad != null && t.ciudad!.trim().isNotEmpty) ? t.ciudad!.trim() : 'Sin dirección';
+          key = c;
+          sub = t.provincia;
+        }
+      }
+
+      final normKey = key.trim();
+      if (!groups.containsKey(normKey)) {
+        groups[normKey] = _TempUbicacionData(titulo: normKey, subtitulo: sub);
+      }
+      final data = groups[normKey]!;
+      data.areaM2 += area;
+      data.cantidadTerrenos += 1;
+      data.valorTotal += val;
+    }
+
+    final List<_UbicacionAreaMetric> list = groups.values.map((g) {
+      final pct = totalArea > 0 ? (g.areaM2 / totalArea * 100) : 0.0;
+      return _UbicacionAreaMetric(
+        titulo: g.titulo,
+        subtitulo: g.subtitulo,
+        areaM2: g.areaM2,
+        cantidadTerrenos: g.cantidadTerrenos,
+        valorTotal: g.valorTotal,
+        porcentajeDelTotal: pct,
+      );
+    }).toList();
+
+    list.sort((a, b) => b.areaM2.compareTo(a.areaM2));
+
+    return list;
+  }
+
+  /// 5. Listado de Terrenos con Buscador y Estados Individuales
   Widget _buildTerrenosSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,4 +1568,33 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
       ),
     );
   }
+}
+
+/// Modelo de métrica territorial agregada por ubicación o dirección
+class _UbicacionAreaMetric {
+  final String titulo;
+  final String? subtitulo;
+  final double areaM2;
+  final int cantidadTerrenos;
+  final double valorTotal;
+  final double porcentajeDelTotal;
+
+  _UbicacionAreaMetric({
+    required this.titulo,
+    this.subtitulo,
+    required this.areaM2,
+    required this.cantidadTerrenos,
+    required this.valorTotal,
+    required this.porcentajeDelTotal,
+  });
+}
+
+class _TempUbicacionData {
+  final String titulo;
+  final String? subtitulo;
+  double areaM2 = 0.0;
+  int cantidadTerrenos = 0;
+  double valorTotal = 0.0;
+
+  _TempUbicacionData({required this.titulo, this.subtitulo});
 }

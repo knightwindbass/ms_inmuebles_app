@@ -16,6 +16,7 @@ class ContratosProvider extends ChangeNotifier {
   ContratosProvider(this._repository);
 
   List<ContratoModel> get contratos => _contratos;
+  List<ContratoModel> get todosLosContratos => _contratos;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;

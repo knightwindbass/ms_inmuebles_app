@@ -715,6 +715,151 @@ void main() {
       expect(fakeRepo.lastExcludeTipo, isNull);
       expect(fakeRepo.lastTipo, equals('Terreno'));
     });
+    test('ContratoModel.fromJson extrae nombres reales de inquilino y referencias desde diversas llaves del backend', () {
+      // Caso A: inquilino como objeto con razon_social y referencia en 'referencia'
+      final c1 = ContratoModel.fromJson({
+        'id': '201',
+        'referencia': 'CTR-REF-201',
+        'inquilino': {
+          'id': '88',
+          'razon_social': 'Logística Integral Transcontinental S.A.',
+          'ruc': '1790012345001',
+        },
+        'valor_pactado': '4500.00',
+        'fecha_inicio': '2025-01-01',
+        'fecha_fin': '2026-01-01',
+      });
+
+      expect(c1.nombresInquilino, equals('Logística Integral Transcontinental S.A.'));
+      expect(c1.numeroContrato, equals('CTR-REF-201'));
+      expect(c1.identificacionInquilino, equals('1790012345001'));
+      expect(c1.inquilinoId, equals(88));
+
+      // Caso B: inquilino como ID numérico y nombre en 'inquilino_nombre'
+      final c2 = ContratoModel.fromJson({
+        'id': '202',
+        'numero': 'CTR-NUM-202',
+        'inquilino': 95,
+        'inquilino_nombre': 'Corporación Farmacéutica Moderna',
+        'cedula': '0912345678',
+        'valor_pactado': '1800.00',
+        'fecha_inicio': '2025-03-01',
+        'fecha_fin': '2026-03-01',
+      });
+
+      expect(c2.nombresInquilino, equals('Corporación Farmacéutica Moderna'));
+      expect(c2.numeroContrato, equals('CTR-NUM-202'));
+      expect(c2.identificacionInquilino, equals('0912345678'));
+      expect(c2.inquilinoId, equals(95));
+
+      // Caso C: inquilino en llave 'cliente' y código en 'codigo'
+      final c3 = ContratoModel.fromJson({
+        'id': '203',
+        'codigo': 'CTR-COD-203',
+        'cliente': {
+          'nombres_razon_social': 'Almacenes El Ahorro Cía. Ltda.',
+          'identificacion': '0990001112001',
+        },
+        'valor_pactado': '2200.00',
+        'fecha_inicio': '2024-06-01',
+        'fecha_fin': '2025-06-01',
+      });
+
+      expect(c3.nombresInquilino, equals('Almacenes El Ahorro Cía. Ltda.'));
+      expect(c3.numeroContrato, equals('CTR-COD-203'));
+      expect(c3.identificacionInquilino, equals('0990001112001'));
+    });
+
+    test('InmuebleModel deserializa historial de contratos bajo llaves alternativas', () {
+      final inmuebleJson = {
+        'id': '10',
+        'nombre': 'Bodega Premier 10',
+        'tipo': 'Bodega',
+        'valor_renta_base': '3000',
+        'historial_contratos': [
+          {
+            'id': '501',
+            'numero_contrato': 'CTR-BOD-501',
+            'inquilino_nombre': 'Distribuciones Andinas S.A.',
+            'valor_pactado': '3000',
+            'fecha_inicio': '2024-01-01',
+            'fecha_fin': '2025-01-01',
+          }
+        ],
+      };
+
+      final inmueble = InmuebleModel.fromJson(inmuebleJson);
+      expect(inmueble.contratos.length, equals(1));
+      expect(inmueble.contratos.first.numeroContrato, equals('CTR-BOD-501'));
+      expect(inmueble.contratos.first.nombresInquilino, equals('Distribuciones Andinas S.A.'));
+    });
+
+    test('Cálculo de Área por Ubicación y Dirección agrupa y ordena de mayor a menor superficie en m²', () {
+      final terrenos = [
+        InmuebleModel(
+          id: 1,
+          nombre: 'Lote Costa 1',
+          tipo: 'Terreno',
+          direccion: 'Vía a la Costa Km 14',
+          ciudad: 'Guayaquil',
+          metraje: 150000.0,
+          valorRentaBase: 0,
+        ),
+        InmuebleModel(
+          id: 2,
+          nombre: 'Lote Costa 2',
+          tipo: 'Terreno',
+          direccion: 'Vía a la Costa Km 14',
+          ciudad: 'Guayaquil',
+          metraje: 100000.0,
+          valorRentaBase: 0,
+        ),
+        InmuebleModel(
+          id: 3,
+          nombre: 'Macrolote Daule',
+          tipo: 'Terreno',
+          direccion: 'Vía Daule Km 12',
+          ciudad: 'Daule',
+          metraje: 500000.0,
+          valorRentaBase: 0,
+        ),
+        InmuebleModel(
+          id: 4,
+          nombre: 'Lote Samborondón',
+          tipo: 'Terreno',
+          direccion: 'Av. Samborondón',
+          ciudad: 'Samborondón',
+          metraje: 50000.0,
+          valorRentaBase: 0,
+        ),
+      ];
+
+      // Simular cálculo de agrupación por dirección
+      final double totalArea = terrenos.fold(0.0, (acc, t) => acc + (t.metraje ?? 0.0));
+      expect(totalArea, equals(800000.0));
+
+      final Map<String, double> areaPorDireccion = {};
+      for (final t in terrenos) {
+        final dir = t.direccion!;
+        areaPorDireccion[dir] = (areaPorDireccion[dir] ?? 0.0) + (t.metraje ?? 0.0);
+      }
+
+      final sortedEntries = areaPorDireccion.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      // La ubicación #1 debe ser Vía Daule Km 12 con 500,000 m² (62.5% del total)
+      expect(sortedEntries.first.key, equals('Vía Daule Km 12'));
+      expect(sortedEntries.first.value, equals(500000.0));
+      expect((sortedEntries.first.value / totalArea * 100), equals(62.5));
+
+      // La ubicación #2 debe ser Vía a la Costa Km 14 con 250,000 m² (31.25% del total)
+      expect(sortedEntries[1].key, equals('Vía a la Costa Km 14'));
+      expect(sortedEntries[1].value, equals(250000.0));
+
+      // La ubicación #3 debe ser Av. Samborondón con 50,000 m² (6.25% del total)
+      expect(sortedEntries[2].key, equals('Av. Samborondón'));
+      expect(sortedEntries[2].value, equals(50000.0));
+    });
   });
 }
 
