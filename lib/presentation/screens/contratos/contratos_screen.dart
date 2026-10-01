@@ -533,25 +533,35 @@ class _ContratosScreenState extends State<ContratosScreen> {
               ),
               const Divider(height: 20),
 
-              // Pie de Tarjeta: Canon de Renta y Fechas
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Pie de Tarjeta: Fechas de Vigencia y Canon de Renta
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Fila 1: Fecha de Expiración y Antigüedad
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.calendar_today_rounded, size: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Expira: ${AppFormatters.date(contrato.fechaFinEffective)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 13,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Expira: ${AppFormatters.date(contrato.fechaFinEffective)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (contrato.aniosAntiguedad > 0) ...[
-                        const SizedBox(width: 8),
+                      if (contrato.aniosAntiguedad > 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(4),
@@ -565,28 +575,33 @@ class _ContratosScreenState extends State<ContratosScreen> {
                             ),
                           ),
                         ),
-                      ],
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 8),
+
+                  // Fila 2: Canon de Renta (directamente debajo de la fecha) y Total Acumulado
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
                             AppFormatters.currency(contrato.valorPactado),
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 16.5,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF10B981),
                             ),
                           ),
+                          const SizedBox(width: 3),
                           Text(
                             contrato.frecuenciaPago.toLowerCase() == 'anual' ? '/año' : '/mes',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             ),
@@ -594,12 +609,23 @@ class _ContratosScreenState extends State<ContratosScreen> {
                         ],
                       ),
                       if (contrato.tieneMultiplesInmuebles)
-                        const Text(
-                          'Total Acumulado',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF059669),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Text(
+                            'Total Acumulado',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF059669),
+                            ),
                           ),
                         ),
                     ],
