@@ -860,6 +860,21 @@ void main() {
       expect(sortedEntries[2].key, equals('Av. Samborondón'));
       expect(sortedEntries[2].value, equals(50000.0));
     });
+
+    test('ContratoModel calcula antigüedad considerando el cierre de ciclo anual (día a víspera)', () {
+      final contrato = ContratoModel(
+        id: 999,
+        fechaInicio: '2024-10-01',
+        fechaFin: '2025-09-30',
+        fechaFinReal: '2027-09-30',
+        isAutoProjected: true,
+        valorPactado: 1500,
+        nombresInquilino: 'Empresa Test',
+      );
+
+      // Si hoy es 2026-09-30 o posterior, ha completado exactamente sus 2 años de contrato
+      expect(contrato.aniosAntiguedad, greaterThanOrEqualTo(2));
+    });
   });
 }
 

@@ -154,10 +154,23 @@ class ContratoModel {
     try {
       final start = DateTime.parse(fechaInicio);
       final now = DateTime.now();
-      if (start.isBefore(now)) {
-        return (now.difference(start).inDays / 365).floor();
+      final nowDateOnly = DateTime(now.year, now.month, now.day);
+      final startDateOnly = DateTime(start.year, start.month, start.day);
+
+      if (!startDateOnly.isBefore(nowDateOnly)) {
+        return 0;
       }
-      return 0;
+
+      int years = nowDateOnly.year - startDateOnly.year;
+      // En contratos de arrendamiento, el ciclo anual concluye el día anterior al aniversario
+      // (por ejemplo: si inició el 01 de octubre, el ciclo anual concluye el 30 de septiembre).
+      final anniversaryThisYear = DateTime(nowDateOnly.year, startDateOnly.month, startDateOnly.day);
+      final cycleEndThisYear = anniversaryThisYear.subtract(const Duration(days: 1));
+
+      if (nowDateOnly.isBefore(cycleEndThisYear)) {
+        years--;
+      }
+      return years > 0 ? years : 0;
     } catch (_) {
       return 0;
     }
