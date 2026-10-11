@@ -309,6 +309,22 @@ class _InquilinosScreenState extends State<InquilinosScreen> {
                         _buildActiveStatusBadge(item),
                       ],
                     ),
+                    if (item.razonSocial != null &&
+                        item.razonSocial!.isNotEmpty &&
+                        item.razonSocial!.toLowerCase().trim() != item.nombresRazonSocial.toLowerCase().trim()) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        item.razonSocial!,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     const SizedBox(height: 2),
                     Text(
                       'ID: ${item.identificacion}',
@@ -448,11 +464,25 @@ class _InquilinoDetailSheet extends StatelessWidget {
             _buildContactRow(
               icon: Icons.email_rounded,
               label: inq.email!,
+              subtitle: 'Contacto',
+              isDark: isDark,
+            ),
+          ],
+          if (inq.emailRecordatorios != null && inq.emailRecordatorios!.isNotEmpty) ...[
+            if ((inq.telefono != null && inq.telefono!.isNotEmpty) || (inq.email != null && inq.email!.isNotEmpty))
+              const SizedBox(height: 6),
+            _buildContactRow(
+              icon: Icons.notifications_active_rounded,
+              iconColor: const Color(0xFFD97706),
+              label: inq.emailRecordatorios!,
+              subtitle: 'Alertas SMTP',
               isDark: isDark,
             ),
           ],
           if (inq.direccion != null && inq.direccion!.isNotEmpty) ...[
-            if ((inq.telefono != null && inq.telefono!.isNotEmpty) || (inq.email != null && inq.email!.isNotEmpty))
+            if ((inq.telefono != null && inq.telefono!.isNotEmpty) ||
+                (inq.email != null && inq.email!.isNotEmpty) ||
+                (inq.emailRecordatorios != null && inq.emailRecordatorios!.isNotEmpty))
               const SizedBox(height: 6),
             _buildContactRow(
               icon: Icons.location_on_rounded,
@@ -467,23 +497,49 @@ class _InquilinoDetailSheet extends StatelessWidget {
 
   Widget _buildContactRow({
     required IconData icon,
+    Color? iconColor,
     required String label,
+    String? subtitle,
     required bool isDark,
   }) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF2563EB)),
+        Icon(icon, size: 14, color: iconColor ?? const Color(0xFF2563EB)),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: (iconColor ?? const Color(0xFF2563EB)).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: iconColor ?? const Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -727,7 +783,24 @@ class _InquilinoDetailSheet extends StatelessWidget {
                     c.identificacionInquilino!.trim().toLowerCase() == inquilino.identificacion.trim().toLowerCase()) {
                   return true;
                 }
-                return c.nombresInquilino.trim().toLowerCase() == inquilino.nombresRazonSocial.trim().toLowerCase();
+                if (c.nombresInquilino.trim().toLowerCase() == inquilino.nombresRazonSocial.trim().toLowerCase()) {
+                  return true;
+                }
+                if (inquilino.razonSocial != null &&
+                    inquilino.razonSocial!.trim().isNotEmpty &&
+                    (c.nombresInquilino.trim().toLowerCase() == inquilino.razonSocial!.trim().toLowerCase() ||
+                        (c.inquilinoRazonSocial != null &&
+                            c.inquilinoRazonSocial!.trim().toLowerCase() ==
+                                inquilino.razonSocial!.trim().toLowerCase()))) {
+                  return true;
+                }
+                if (c.inquilinoRazonSocial != null &&
+                    c.inquilinoRazonSocial!.trim().isNotEmpty &&
+                    c.inquilinoRazonSocial!.trim().toLowerCase() ==
+                        inquilino.nombresRazonSocial.trim().toLowerCase()) {
+                  return true;
+                }
+                return false;
               }).toList();
 
               final activeContracts = allContracts.where((c) => c.isVigente).toList();
@@ -793,6 +866,21 @@ class _InquilinoDetailSheet extends StatelessWidget {
                                 letterSpacing: -0.3,
                               ),
                             ),
+                            if (inquilino.razonSocial != null &&
+                                inquilino.razonSocial!.isNotEmpty &&
+                                inquilino.razonSocial!.toLowerCase().trim() !=
+                                    inquilino.nombresRazonSocial.toLowerCase().trim()) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                inquilino.razonSocial!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FontStyle.italic,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 4),
                             Text(
                               'ID / RUC: ${inquilino.identificacion}',

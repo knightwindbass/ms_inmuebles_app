@@ -65,14 +65,16 @@ class ContratoModel {
   final double valorPactado;
   final String frecuenciaPago;
   final String estado;
-  final String nombresInquilino;
+  final String nombresInquilino; // Nombre Referencial
+  final String? inquilinoRazonSocial; // Razón Social Legal
   final String? identificacionInquilino;
   final int? inquilinoId;
   final String? inmuebleNombre;
   final int? inmuebleId;
   final double? metraje;
   final String? propietario;
-  final String? emailInquilino;
+  final String? emailInquilino; // Correo de Contacto
+  final String? emailRecordatorios; // Correo para Recordatorios (Vencimiento/Cobros SMTP)
   final String? telefonoInquilino;
   final String? observaciones;
   final int diaPagoPreferido;
@@ -89,6 +91,7 @@ class ContratoModel {
     this.frecuenciaPago = 'mensual',
     this.estado = 'vigente',
     required this.nombresInquilino,
+    this.inquilinoRazonSocial,
     this.identificacionInquilino,
     this.inquilinoId,
     this.inmuebleNombre,
@@ -96,6 +99,7 @@ class ContratoModel {
     this.metraje,
     this.propietario,
     this.emailInquilino,
+    this.emailRecordatorios,
     this.telefonoInquilino,
     this.observaciones,
     this.diaPagoPreferido = 1,
@@ -208,6 +212,7 @@ class ContratoModel {
     String? frecuenciaPago,
     String? estado,
     String? nombresInquilino,
+    String? inquilinoRazonSocial,
     String? identificacionInquilino,
     int? inquilinoId,
     String? inmuebleNombre,
@@ -215,6 +220,7 @@ class ContratoModel {
     double? metraje,
     String? propietario,
     String? emailInquilino,
+    String? emailRecordatorios,
     String? telefonoInquilino,
     String? observaciones,
     int? diaPagoPreferido,
@@ -239,6 +245,7 @@ class ContratoModel {
       frecuenciaPago: frecuenciaPago ?? this.frecuenciaPago,
       estado: estado ?? this.estado,
       nombresInquilino: nombresInquilino ?? this.nombresInquilino,
+      inquilinoRazonSocial: inquilinoRazonSocial ?? this.inquilinoRazonSocial,
       identificacionInquilino: identificacionInquilino ?? this.identificacionInquilino,
       inquilinoId: inquilinoId ?? this.inquilinoId,
       inmuebleNombre: effectiveInmuebleNombre,
@@ -246,6 +253,7 @@ class ContratoModel {
       metraje: metraje ?? this.metraje,
       propietario: propietario ?? this.propietario,
       emailInquilino: emailInquilino ?? this.emailInquilino,
+      emailRecordatorios: emailRecordatorios ?? this.emailRecordatorios,
       telefonoInquilino: telefonoInquilino ?? this.telefonoInquilino,
       observaciones: observaciones ?? this.observaciones,
       diaPagoPreferido: diaPagoPreferido ?? this.diaPagoPreferido,
@@ -305,6 +313,10 @@ class ContratoModel {
         ? nombresInquilino
         : (other.nombresInquilino.isNotEmpty ? other.nombresInquilino : nombresInquilino);
 
+    final String? bestRS = (inquilinoRazonSocial != null && inquilinoRazonSocial!.isNotEmpty)
+        ? inquilinoRazonSocial
+        : other.inquilinoRazonSocial;
+
     final String? bestIden = (identificacionInquilino != null && identificacionInquilino!.isNotEmpty)
         ? identificacionInquilino
         : other.identificacionInquilino;
@@ -312,6 +324,10 @@ class ContratoModel {
     final String? bestEmail = (emailInquilino != null && emailInquilino!.isNotEmpty)
         ? emailInquilino
         : other.emailInquilino;
+
+    final String? bestEmailRec = (emailRecordatorios != null && emailRecordatorios!.isNotEmpty)
+        ? emailRecordatorios
+        : other.emailRecordatorios;
 
     final String? bestTel = (telefonoInquilino != null && telefonoInquilino!.isNotEmpty)
         ? telefonoInquilino
@@ -338,9 +354,11 @@ class ContratoModel {
       metraje: newMetraje > 0 ? newMetraje : null,
       estado: bestEstado,
       nombresInquilino: bestInq,
+      inquilinoRazonSocial: bestRS,
       identificacionInquilino: bestIden,
       inquilinoId: bestInqId,
       emailInquilino: bestEmail,
+      emailRecordatorios: bestEmailRec,
       telefonoInquilino: bestTel,
       propietario: bestProp,
       fechaFinReal: bestFechaFinReal,
@@ -403,6 +421,8 @@ class ContratoModel {
   factory ContratoModel.fromJson(Map<String, dynamic> json) {
     // Inquilino puede venir como String simple o como Map
     String inquilinoName = '';
+    String? inqRazonSocial;
+    String? inqEmailRecordatorios;
     String? inqIden;
     String? inqEmail;
     String? inqTel;
@@ -420,15 +440,18 @@ class ContratoModel {
     if (json['inquilino'] is Map) {
       final inqMap = json['inquilino'] as Map;
       final cand = inqMap['nombres_razon_social']?.toString() ??
-          inqMap['razon_social']?.toString() ??
+          inqMap['nombre_referencial']?.toString() ??
           inqMap['nombre']?.toString() ??
           inqMap['nombre_completo']?.toString() ??
           inqMap['display_name']?.toString() ??
           inqMap['name']?.toString() ??
-          inqMap['nombres']?.toString();
+          inqMap['nombres']?.toString() ??
+          inqMap['razon_social']?.toString();
       if (isValidTenantName(cand)) {
         inquilinoName = cand!.trim();
       }
+      inqRazonSocial = inqMap['razon_social']?.toString() ?? inqMap['inquilino_razon_social']?.toString();
+      inqEmailRecordatorios = inqMap['email_recordatorios']?.toString();
       inqIden = inqMap['identificacion']?.toString() ?? inqMap['cedula']?.toString() ?? inqMap['ruc']?.toString();
       inqEmail = inqMap['email']?.toString() ?? inqMap['correo']?.toString();
       inqTel = inqMap['telefono']?.toString() ?? inqMap['celular']?.toString();
@@ -442,6 +465,8 @@ class ContratoModel {
         json['inquilino_nombre'],
         json['nombre_inquilino'],
         json['inquilino_nombres'],
+        json['nombres_razon_social'],
+        json['nombre_referencial'],
         json['inquilino_razon_social'],
         json['razon_social'],
         json['cliente_nombre'],
@@ -462,10 +487,13 @@ class ContratoModel {
       if (json['cliente'] is Map) {
         final clMap = json['cliente'] as Map;
         final cand = clMap['nombres_razon_social']?.toString() ??
-            clMap['razon_social']?.toString() ??
+            clMap['nombre_referencial']?.toString() ??
             clMap['nombre']?.toString() ??
-            clMap['display_name']?.toString();
+            clMap['display_name']?.toString() ??
+            clMap['razon_social']?.toString();
         if (isValidTenantName(cand)) inquilinoName = cand!.trim();
+        inqRazonSocial ??= clMap['razon_social']?.toString() ?? clMap['inquilino_razon_social']?.toString();
+        inqEmailRecordatorios ??= clMap['email_recordatorios']?.toString();
         inqIden ??= clMap['identificacion']?.toString() ?? clMap['cedula']?.toString() ?? clMap['ruc']?.toString();
         inqEmail ??= clMap['email']?.toString() ?? clMap['correo']?.toString();
         inqTel ??= clMap['telefono']?.toString() ?? clMap['celular']?.toString();
@@ -478,10 +506,13 @@ class ContratoModel {
       if (json['arrendatario'] is Map) {
         final arrMap = json['arrendatario'] as Map;
         final cand = arrMap['nombres_razon_social']?.toString() ??
-            arrMap['razon_social']?.toString() ??
+            arrMap['nombre_referencial']?.toString() ??
             arrMap['nombre']?.toString() ??
-            arrMap['display_name']?.toString();
+            arrMap['display_name']?.toString() ??
+            arrMap['razon_social']?.toString();
         if (isValidTenantName(cand)) inquilinoName = cand!.trim();
+        inqRazonSocial ??= arrMap['razon_social']?.toString() ?? arrMap['arrendatario_razon_social']?.toString();
+        inqEmailRecordatorios ??= arrMap['email_recordatorios']?.toString();
         inqIden ??= arrMap['identificacion']?.toString() ?? arrMap['cedula']?.toString() ?? arrMap['ruc']?.toString();
         inqEmail ??= arrMap['email']?.toString() ?? arrMap['correo']?.toString();
         inqTel ??= arrMap['telefono']?.toString() ?? arrMap['celular']?.toString();
@@ -493,6 +524,14 @@ class ContratoModel {
     if (inquilinoName.isEmpty) {
       inquilinoName = 'Inquilino';
     }
+
+    inqRazonSocial ??= json['inquilino_razon_social']?.toString() ??
+        json['razon_social_inquilino']?.toString() ??
+        json['razon_social']?.toString() ??
+        json['arrendatario_razon_social']?.toString();
+    inqEmailRecordatorios ??= json['inquilino_email_recordatorios']?.toString() ??
+        json['email_recordatorios_inquilino']?.toString() ??
+        json['email_recordatorios']?.toString();
 
     inqIden ??= json['identificacion_inquilino']?.toString() ??
         json['identificacion']?.toString() ??
@@ -581,6 +620,7 @@ class ContratoModel {
       frecuenciaPago: json['frecuencia_pago']?.toString().toLowerCase() ?? 'mensual',
       estado: json['estado']?.toString().toLowerCase() ?? 'vigente',
       nombresInquilino: inquilinoName,
+      inquilinoRazonSocial: (inqRazonSocial != null && inqRazonSocial.trim().isNotEmpty) ? inqRazonSocial.trim() : null,
       identificacionInquilino: inqIden,
       inquilinoId: parsedInquilinoId,
       inmuebleNombre: inmName,
@@ -588,6 +628,7 @@ class ContratoModel {
       metraje: parsedMetraje,
       propietario: json['propietario']?.toString(),
       emailInquilino: inqEmail,
+      emailRecordatorios: (inqEmailRecordatorios != null && inqEmailRecordatorios.trim().isNotEmpty) ? inqEmailRecordatorios.trim() : null,
       telefonoInquilino: inqTel,
       observaciones: json['observaciones']?.toString(),
       diaPagoPreferido: _toInt(json['dia_pago_preferido'] ?? 1),
@@ -607,6 +648,7 @@ class ContratoModel {
       'frecuencia_pago': frecuenciaPago,
       'estado': estado,
       'inquilino': nombresInquilino,
+      if (inquilinoRazonSocial != null) 'inquilino_razon_social': inquilinoRazonSocial,
       if (inquilinoId != null) 'inquilino_id': inquilinoId,
       if (inmuebleNombre != null) 'inmueble_nombre': inmuebleNombre,
       if (inmuebleId != null) 'inmueble_id': inmuebleId,
@@ -614,6 +656,7 @@ class ContratoModel {
       if (propietario != null) 'propietario': propietario,
       if (identificacionInquilino != null) 'identificacion_inquilino': identificacionInquilino,
       if (emailInquilino != null) 'email_inquilino': emailInquilino,
+      if (emailRecordatorios != null) 'email_recordatorios': emailRecordatorios,
       if (telefonoInquilino != null) 'telefono_inquilino': telefonoInquilino,
       if (observaciones != null) 'observaciones': observaciones,
       'inmuebles': inmueblesAsociados.map((e) => e.toJson()).toList(),

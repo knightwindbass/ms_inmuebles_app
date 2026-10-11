@@ -154,12 +154,16 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 14),
-                            _buildRow(Icons.person_rounded, 'Nombre / Razón Social', item.nombresInquilino, isDark),
+                            _buildRow(Icons.person_rounded, 'Nombre Referencial', item.nombresInquilino, isDark),
+                            if (item.inquilinoRazonSocial != null && item.inquilinoRazonSocial!.trim().isNotEmpty)
+                              _buildRow(Icons.business_rounded, 'Razón Social Legal', item.inquilinoRazonSocial, isDark),
                             _buildRow(Icons.badge_rounded, 'Identificación', item.identificacionInquilino, isDark),
                             if (item.telefonoInquilino != null && item.telefonoInquilino!.isNotEmpty)
                               _buildRow(Icons.phone_rounded, 'Teléfono', item.telefonoInquilino, isDark),
                             if (item.emailInquilino != null && item.emailInquilino!.isNotEmpty)
-                              _buildRow(Icons.email_rounded, 'Correo', item.emailInquilino, isDark),
+                              _buildRow(Icons.email_rounded, 'Correo Contacto', item.emailInquilino, isDark),
+                            if (item.emailRecordatorios != null && item.emailRecordatorios!.isNotEmpty)
+                              _buildRow(Icons.notifications_active_rounded, 'Correo Recordatorios', item.emailRecordatorios, isDark, iconColor: const Color(0xFFD97706)),
                           ],
                         ),
                       ),
@@ -391,12 +395,12 @@ class _ContratoDetailScreenState extends State<ContratoDetailScreen> {
     );
   }
 
-  Widget _buildRow(IconData icon, String label, String? value, bool isDark) {
+  Widget _buildRow(IconData icon, String label, String? value, bool isDark, {Color? iconColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+          Icon(icon, size: 18, color: iconColor ?? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
           const SizedBox(width: 10),
           SizedBox(
             width: 130,

@@ -27,14 +27,18 @@ class InquilinosProvider extends ChangeNotifier {
     final lowerQuery = _searchQuery.toLowerCase();
     return _todosLosInquilinos.where((inq) {
       final nombre = inq.nombresRazonSocial.toLowerCase();
+      final razonSocial = inq.razonSocial?.toLowerCase() ?? '';
       final id = inq.identificacion.toLowerCase();
       final tel = inq.telefono?.toLowerCase() ?? '';
       final email = inq.email?.toLowerCase() ?? '';
+      final emailRec = inq.emailRecordatorios?.toLowerCase() ?? '';
 
       return nombre.contains(lowerQuery) ||
+          razonSocial.contains(lowerQuery) ||
           id.contains(lowerQuery) ||
           tel.contains(lowerQuery) ||
-          email.contains(lowerQuery);
+          email.contains(lowerQuery) ||
+          emailRec.contains(lowerQuery);
     }).toList();
   }
 

@@ -875,6 +875,91 @@ void main() {
       // Si hoy es 2026-09-30 o posterior, ha completado exactamente sus 2 años de contrato
       expect(contrato.aniosAntiguedad, greaterThanOrEqualTo(2));
     });
+
+    test('InquilinoModel deserializa y serializa correctamente razon_social y email_recordatorios', () {
+      final jsonSample = {
+        'id': 42,
+        'identificacion': '0992345678001',
+        'nombres_razon_social': 'Almacenes El Éxito',
+        'razon_social': 'Éxito Corp S.A.',
+        'email': 'contacto@exito.com',
+        'email_recordatorios': 'cobranzas@exito.com',
+        'telefono': '0991234567',
+        'direccion': 'Km 12 Vía Daule',
+        'contratos_vigentes': 2,
+      };
+
+      final inq = InquilinoModel.fromJson(jsonSample);
+
+      expect(inq.id, equals(42));
+      expect(inq.identificacion, equals('0992345678001'));
+      expect(inq.nombresRazonSocial, equals('Almacenes El Éxito'));
+      expect(inq.razonSocial, equals('Éxito Corp S.A.'));
+      expect(inq.email, equals('contacto@exito.com'));
+      expect(inq.emailRecordatorios, equals('cobranzas@exito.com'));
+      expect(inq.isActivo, isTrue);
+
+      final exportedJson = inq.toJson();
+      expect(exportedJson['nombres_razon_social'], equals('Almacenes El Éxito'));
+      expect(exportedJson['razon_social'], equals('Éxito Corp S.A.'));
+      expect(exportedJson['email'], equals('contacto@exito.com'));
+      expect(exportedJson['email_recordatorios'], equals('cobranzas@exito.com'));
+    });
+
+    test('ContratoModel deserializa inquilinoRazonSocial y emailRecordatorios de JSON y child maps', () {
+      final jsonConChildMap = {
+        'id': 105,
+        'numero_contrato': 'CTR-2026-X',
+        'fecha_inicio': '2026-01-01',
+        'fecha_fin': '2027-01-01',
+        'valor_pactado': 3500.0,
+        'inquilino': {
+          'nombres_razon_social': 'Distribuidora Global',
+          'razon_social': 'Global Logistics S.A.',
+          'email': 'ventas@globallogistics.com',
+          'email_recordatorios': 'pagos@globallogistics.com',
+          'identificacion': '1799887766001',
+          'telefono': '0987654321',
+        },
+      };
+
+      final contrato = ContratoModel.fromJson(jsonConChildMap);
+
+      expect(contrato.nombresInquilino, equals('Distribuidora Global'));
+      expect(contrato.inquilinoRazonSocial, equals('Global Logistics S.A.'));
+      expect(contrato.emailInquilino, equals('ventas@globallogistics.com'));
+      expect(contrato.emailRecordatorios, equals('pagos@globallogistics.com'));
+
+      final jsonFlat = {
+        'id': 106,
+        'numero_contrato': 'CTR-2026-Y',
+        'fecha_inicio': '2026-01-01',
+        'fecha_fin': '2027-01-01',
+        'valor_pactado': 1200.0,
+        'nombres_inquilino': 'Bodega Central',
+        'inquilino_razon_social': 'Central Storage Cía. Ltda.',
+        'email_inquilino': 'info@centralstorage.ec',
+        'email_recordatorios': 'facturas@centralstorage.ec',
+      };
+
+      final contratoFlat = ContratoModel.fromJson(jsonFlat);
+
+      expect(contratoFlat.nombresInquilino, equals('Bodega Central'));
+      expect(contratoFlat.inquilinoRazonSocial, equals('Central Storage Cía. Ltda.'));
+      expect(contratoFlat.emailInquilino, equals('info@centralstorage.ec'));
+      expect(contratoFlat.emailRecordatorios, equals('facturas@centralstorage.ec'));
+
+      final copy = contratoFlat.copyWith(
+        inquilinoRazonSocial: 'Nueva Razón Social S.A.',
+        emailRecordatorios: 'nuevo_smtp@centralstorage.ec',
+      );
+      expect(copy.inquilinoRazonSocial, equals('Nueva Razón Social S.A.'));
+      expect(copy.emailRecordatorios, equals('nuevo_smtp@centralstorage.ec'));
+
+      final toJson = contrato.toJson();
+      expect(toJson['inquilino_razon_social'], equals('Global Logistics S.A.'));
+      expect(toJson['email_recordatorios'], equals('pagos@globallogistics.com'));
+    });
   });
 }
 
