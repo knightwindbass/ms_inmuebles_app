@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/models/dashboard_kpi_model.dart';
 import '../data/models/inmueble_model.dart';
+import '../data/models/pareto_model.dart';
 import '../data/models/tenant_perfil_model.dart';
 import '../data/repositories/dashboard_repository.dart';
 import '../data/repositories/inmuebles_repository.dart';
@@ -13,6 +14,8 @@ class DashboardProvider extends ChangeNotifier {
   DashboardKpiModel? _kpis;
   DashboardKpiModel? _terrenosKpis;
   TenantPerfilModel? _tenantPerfil;
+  ParetoResumenModel? _paretoFullReport;
+  bool _isLoadingPareto = false;
   bool _isLoading = false;
   String? _errorMessage;
   int? _selectedPadreId;
@@ -22,6 +25,9 @@ class DashboardProvider extends ChangeNotifier {
   DashboardKpiModel? get kpis => _kpis;
   DashboardKpiModel? get terrenosKpis => _terrenosKpis;
   TenantPerfilModel? get tenantPerfil => _tenantPerfil;
+  ParetoResumenModel? get paretoTopTen => _kpis?.paretoTopTen ?? _paretoFullReport;
+  ParetoResumenModel? get paretoFullReport => _paretoFullReport ?? _kpis?.paretoTopTen;
+  bool get isLoadingPareto => _isLoadingPareto;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int? get selectedPadreId => _selectedPadreId;
@@ -29,6 +35,24 @@ class DashboardProvider extends ChangeNotifier {
   String? get bannerUrl => _tenantPerfil?.appBanner ?? _kpis?.bannerUrl;
   String? get logoUrl => _tenantPerfil?.logo ?? _kpis?.logoUrl;
   String? get slogan => _tenantPerfil?.slogan ?? _kpis?.slogan;
+
+  /// Obtiene el reporte completo de Pareto / Reporte Ejecutivo de Concentración
+  Future<ParetoResumenModel?> fetchParetoReport({bool forceRefresh = false}) async {
+    if (!forceRefresh && _paretoFullReport != null) {
+      return _paretoFullReport;
+    }
+    _isLoadingPareto = true;
+    notifyListeners();
+    try {
+      final report = await _repository.getParetoRenta();
+      if (report != null) {
+        _paretoFullReport = report;
+      }
+    } catch (_) {}
+    _isLoadingPareto = false;
+    notifyListeners();
+    return _paretoFullReport ?? _kpis?.paretoTopTen;
+  }
 
   /// Obtiene métricas aisladas para una categoría o tipología específica
   Future<DashboardKpiModel> fetchCategoryKpi(String tipo) async {

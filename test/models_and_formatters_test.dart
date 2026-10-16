@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ms_inmuebles_app/core/theme/app_theme.dart';
 import 'package:ms_inmuebles_app/core/utils/formatters.dart';
 import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
+import 'package:ms_inmuebles_app/data/models/pareto_model.dart';
 import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
 import 'package:ms_inmuebles_app/data/models/inquilino_model.dart';
 import 'package:ms_inmuebles_app/data/models/tenant_perfil_model.dart';
@@ -959,6 +960,106 @@ void main() {
       final toJson = contrato.toJson();
       expect(toJson['inquilino_razon_social'], equals('Global Logistics S.A.'));
       expect(toJson['email_recordatorios'], equals('pagos@globallogistics.com'));
+    });
+
+    test('ParetoResumenModel y ParetoItemModel deserializan correctamente y calculan métricas 80/20', () {
+      final jsonSample = {
+        "total_mrr": 789125.0,
+        "total_empresas": 15,
+        "mrr_top_ten": 673500.0,
+        "participacion_top_ten_pct": 85.35,
+        "top_ten": [
+          {
+            "posicion": 1,
+            "empresa": "TIENDAS TUTI TTDE S.A.",
+            "ruc": "0000000014, 0000000007",
+            "mrr": 222871.88,
+            "total_locales": 2,
+            "sucursales": "Tuti | Tuti CDI",
+            "participacion_pct": 28.24,
+            "acumulado_pct": 28.24,
+            "es_vital_80": true
+          },
+          {
+            "posicion": 2,
+            "empresa": "CORPORACION FAVORITA C.A.",
+            "ruc": "1790016919001",
+            "mrr": 150000.0,
+            "total_locales": 1,
+            "sucursales": "Supermaxi",
+            "participacion_pct": 19.01,
+            "acumulado_pct": 47.25,
+            "es_vital_80": true
+          }
+        ],
+        "ranking_completo": []
+      };
+
+      final resumen = ParetoResumenModel.fromJson(jsonSample);
+
+      expect(resumen.totalMrr, equals(789125.0));
+      expect(resumen.totalEmpresas, equals(15));
+      expect(resumen.mrrTopTen, equals(673500.0));
+      expect(resumen.participacionTopTenPct, equals(85.35));
+      expect(resumen.topTen.length, equals(2));
+      expect(resumen.mrrResto, closeTo(115625.0, 0.01));
+      expect(resumen.participacionRestoPct, closeTo(14.65, 0.01));
+      expect(resumen.vitalCount, equals(2));
+
+      final first = resumen.topTen.first;
+      expect(first.posicion, equals(1));
+      expect(first.medal, equals('🥇 1°'));
+      expect(first.empresa, equals('TIENDAS TUTI TTDE S.A.'));
+      expect(first.ruc, equals('0000000014, 0000000007'));
+      expect(first.mrr, equals(222871.88));
+      expect(first.totalLocales, equals(2));
+      expect(first.hasMultipleLocales, isTrue);
+      expect(first.sucursales, equals('Tuti | Tuti CDI'));
+      expect(first.hasDetailedSucursales, isTrue);
+      expect(first.participacionPct, equals(28.24));
+      expect(first.acumuladoPct, equals(28.24));
+      expect(first.esVital80, isTrue);
+
+      final second = resumen.topTen[1];
+      expect(second.posicion, equals(2));
+      expect(second.medal, equals('🥈 2°'));
+    });
+
+    test('DashboardKpiModel deserializa pareto_top_ten correctamente', () {
+      final jsonKpis = {
+        "inmuebles": {"total": 50},
+        "jerarquia": {"princ_activas": 5, "princ_inactivas": 0, "sub_activas": 45, "sub_inactivas": 0},
+        "tasa_ocupacion": 92.0,
+        "ingresos_mensuales_proyectados": 50000.0,
+        "distribucion_tipos_estado": [],
+        "pareto_top_ten": {
+          "total_mrr": 50000.0,
+          "total_empresas": 8,
+          "mrr_top_ten": 45000.0,
+          "participacion_top_ten_pct": 90.0,
+          "top_ten": [
+            {
+              "posicion": 1,
+              "empresa": "FARMACIAS ECONOMICAS S.A.",
+              "ruc": "1791234567001",
+              "mrr": 20000.0,
+              "total_locales": 3,
+              "sucursales": "Norte | Centro | Sur",
+              "participacion_pct": 40.0,
+              "acumulado_pct": 40.0,
+              "es_vital_80": true
+            }
+          ]
+        }
+      };
+
+      final model = DashboardKpiModel.fromJson(jsonKpis);
+
+      expect(model.paretoTopTen, isNotNull);
+      expect(model.paretoTopTen!.totalMrr, equals(50000.0));
+      expect(model.paretoTopTen!.topTen.length, equals(1));
+      expect(model.paretoTopTen!.topTen.first.empresa, equals('FARMACIAS ECONOMICAS S.A.'));
+      expect(model.paretoTopTen!.topTen.first.totalLocales, equals(3));
     });
   });
 }

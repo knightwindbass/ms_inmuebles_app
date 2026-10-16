@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dashboard_provider.dart';
 import '../../widgets/analytics_slide_block.dart';
+import '../../widgets/pareto_summary_card.dart';
 import '../../widgets/portfolio_hero_banner.dart';
 import '../../widgets/smart_kpi_card.dart';
 import 'categoria_kpi_screen.dart';
@@ -151,6 +152,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // Sección Interactiva Deslizable: Composición del Parque & Acceso a KPIs por Categoría
         _buildComposicionParque(context, provider, kpis, isDark),
+        const SizedBox(height: 16),
+
+        // Sección Ejecutiva: Análisis de Pareto (Top 10 Renta y Concentración 80/20)
+        ParetoSummaryCard(
+          pareto: provider.paretoTopTen,
+          totalMrrFallback: kpis.displayRentaMensual,
+        ),
         const SizedBox(height: 16),
 
         // Bloque Deslizable (Slide): Tipología & Rentabilidad por Ubicación

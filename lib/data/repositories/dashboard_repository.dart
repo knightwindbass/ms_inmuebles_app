@@ -1,6 +1,7 @@
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
 import '../models/dashboard_kpi_model.dart';
+import '../models/pareto_model.dart';
 import '../models/tenant_perfil_model.dart';
 
 /// Repositorio para consultar métricas e inteligencia de negocio (/dashboard/resumen).
@@ -47,6 +48,17 @@ class DashboardRepository {
     } catch (_) {
       // Si el endpoint aún no está desplegado o falla, no detiene el funcionamiento del dashboard
     }
+    return null;
+  }
+
+  /// Consulta el reporte completo de Concentración de Renta: Análisis de Pareto (80/20)
+  Future<ParetoResumenModel?> getParetoRenta() async {
+    try {
+      final response = await _client.get(ApiConstants.reportesParetoRenta);
+      if (response is Map<String, dynamic>) {
+        return ParetoResumenModel.fromJson(response);
+      }
+    } catch (_) {}
     return null;
   }
 }

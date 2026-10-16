@@ -1,3 +1,5 @@
+import 'pareto_model.dart';
+
 /// Modelo para las métricas e inteligencia de negocio (/dashboard/resumen).
 class DashboardKpiModel {
   final InmueblesDesglose inmuebles;
@@ -20,6 +22,9 @@ class DashboardKpiModel {
   final String? bannerUrl;
   final String? logoUrl;
   final String? slogan;
+
+  // Análisis de Concentración de Renta (Pareto 80/20 y Top 10)
+  final ParetoResumenModel? paretoTopTen;
 
   static const List<String> labelsTipos = [
     'Edificio',
@@ -48,6 +53,7 @@ class DashboardKpiModel {
     this.bannerUrl,
     this.logoUrl,
     this.slogan,
+    this.paretoTopTen,
   });
 
   // Getters inteligentes calculados dinámicamente según la realidad del portafolio
@@ -83,6 +89,7 @@ class DashboardKpiModel {
     String? bannerUrl,
     String? logoUrl,
     String? slogan,
+    ParetoResumenModel? paretoTopTen,
   }) {
     return DashboardKpiModel(
       inmuebles: inmuebles ?? this.inmuebles,
@@ -103,6 +110,7 @@ class DashboardKpiModel {
       bannerUrl: bannerUrl ?? this.bannerUrl,
       logoUrl: logoUrl ?? this.logoUrl,
       slogan: slogan ?? this.slogan,
+      paretoTopTen: paretoTopTen ?? this.paretoTopTen,
     );
   }
 
@@ -173,6 +181,15 @@ class DashboardKpiModel {
       }
     }
 
+    // Deserialización de Pareto Top Ten (Concentración de Renta)
+    final rawPareto = json['pareto_top_ten'] ?? (rawJson is Map ? rawJson['pareto_top_ten'] : null);
+    ParetoResumenModel? paretoModel;
+    if (rawPareto is Map<String, dynamic>) {
+      paretoModel = ParetoResumenModel.fromJson(rawPareto);
+    } else if (rawPareto is Map) {
+      paretoModel = ParetoResumenModel.fromJson(Map<String, dynamic>.from(rawPareto));
+    }
+
     return DashboardKpiModel(
       inmuebles: inmueblesObj,
       jerarquia: jerarquiaObj,
@@ -192,6 +209,7 @@ class DashboardKpiModel {
       bannerUrl: json['banner_url']?.toString(),
       logoUrl: json['logo_url']?.toString(),
       slogan: json['slogan']?.toString(),
+      paretoTopTen: paretoModel,
     );
   }
 
