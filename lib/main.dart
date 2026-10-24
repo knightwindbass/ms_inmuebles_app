@@ -5,12 +5,14 @@ import 'core/storage/session_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/contratos_repository.dart';
 import 'data/repositories/dashboard_repository.dart';
+import 'data/repositories/deuda_repository.dart';
 import 'data/repositories/inmuebles_repository.dart';
 import 'data/repositories/inquilinos_repository.dart';
 import 'data/repositories/tenant_repository.dart';
 import 'logic/auth_provider.dart';
 import 'logic/contratos_provider.dart';
 import 'logic/dashboard_provider.dart';
+import 'logic/deuda_provider.dart';
 import 'logic/inmuebles_provider.dart';
 import 'logic/inquilinos_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -47,6 +49,9 @@ void main() async {
         ProxyProvider<AuthProvider, TenantRepository>(
           update: (_, auth, __) => TenantRepository(auth.apiClient),
         ),
+        ProxyProvider<AuthProvider, DeudaRepository>(
+          update: (_, auth, __) => DeudaRepository(auth.apiClient),
+        ),
 
         // Proveedores de Estado de la Aplicación
         ChangeNotifierProxyProvider2<DashboardRepository, InmueblesRepository, DashboardProvider>(
@@ -67,6 +72,10 @@ void main() async {
         ChangeNotifierProxyProvider<InquilinosRepository, InquilinosProvider>(
           create: (context) => InquilinosProvider(context.read<InquilinosRepository>()),
           update: (_, repo, prev) => prev ?? InquilinosProvider(repo),
+        ),
+        ChangeNotifierProxyProvider<DeudaRepository, DeudaProvider>(
+          create: (context) => DeudaProvider(context.read<DeudaRepository>()),
+          update: (_, repo, prev) => prev ?? DeudaProvider(repo),
         ),
       ],
       child: const MSInmueblesApp(),

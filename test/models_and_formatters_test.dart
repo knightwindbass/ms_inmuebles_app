@@ -7,6 +7,7 @@ import 'package:ms_inmuebles_app/data/models/contrato_model.dart';
 import 'package:ms_inmuebles_app/data/models/inquilino_model.dart';
 import 'package:ms_inmuebles_app/data/models/tenant_perfil_model.dart';
 import 'package:ms_inmuebles_app/data/models/inmueble_model.dart';
+import 'package:ms_inmuebles_app/data/models/deuda_inmobiliaria_model.dart';
 import 'package:ms_inmuebles_app/data/repositories/inmuebles_repository.dart';
 import 'package:ms_inmuebles_app/logic/inmuebles_provider.dart';
 import 'package:ms_inmuebles_app/presentation/screens/setup/qr_scanner_screen.dart';
@@ -1060,6 +1061,59 @@ void main() {
       expect(model.paretoTopTen!.topTen.length, equals(1));
       expect(model.paretoTopTen!.topTen.first.empresa, equals('FARMACIAS ECONOMICAS S.A.'));
       expect(model.paretoTopTen!.topTen.first.totalLocales, equals(3));
+    });
+
+    test('DeudaDashboardModel y ProyectoDeudaModel deserializan métricas de pasivos y tramos', () {
+      final sampleJson = {
+        "success": true,
+        "corte_fecha": "30 de septiembre de 2026",
+        "resumen": {
+          "total_proyectos": 9,
+          "deuda_total_consolidada": 43250100.0,
+          "monto_original_registrado": 52190000.0,
+          "porcentaje_reduccion_total": 17.13,
+          "pago_mensual_registrado": 540200.0,
+          "reduccion_neta_capital": 8939900.0,
+          "pago_anualizado": 6482400.0,
+          "rentas_mensuales_vigentes": 620000.0,
+          "flujo_neto_mensual": 79800.0
+        },
+        "distribucion_bancos": [],
+        "proyectos": [
+          {
+            "id": 1,
+            "slug_id": "ceisa",
+            "name": "CEISA",
+            "bank": "Banco Bolivariano / Consorcio",
+            "original": 12000000.0,
+            "balance": 8450000.0,
+            "monthly": 150000.0,
+            "start": "2024-01-01",
+            "end": "2034-01-01",
+            "rate": "8.75%",
+            "note": "Crédito corporativo",
+            "capital_reducido": 3550000.0,
+            "porcentaje_reducido": 29.58,
+            "tipo_amortizacion": "frances",
+            "parts": [
+              {
+                "id": 101,
+                "descripcion": "Tramo A - Infraestructura",
+                "banco": "Banco Bolivariano",
+                "monto": 4225000.0
+              }
+            ]
+          }
+        ]
+      };
+
+      final dashboard = DeudaDashboardModel.fromJson(sampleJson);
+      expect(dashboard.resumen.totalProyectos, equals(9));
+      expect(dashboard.resumen.deudaTotalConsolidada, equals(43250100.0));
+      expect(dashboard.proyectos.length, equals(1));
+      expect(dashboard.proyectos.first.name, equals('CEISA'));
+      expect(dashboard.proyectos.first.parts?.length, equals(1));
+      expect(dashboard.proyectos.first.parts?.first.descripcion, equals('Tramo A - Infraestructura'));
     });
   });
 }
