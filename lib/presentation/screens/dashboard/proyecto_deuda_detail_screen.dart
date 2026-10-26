@@ -61,24 +61,53 @@ class _ProyectoDeudaDetailScreenState extends State<ProyectoDeudaDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banco emisor badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            // Banco emisor badge y Badge Operativo
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    ),
+                  ),
+                  child: Text(
+                    p.bank,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                p.bank,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: p.esDeudaOperativa
+                        ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: p.esDeudaOperativa
+                          ? const Color(0xFFA7F3D0)
+                          : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                    ),
+                  ),
+                  child: Text(
+                    p.esDeudaOperativa ? '✓ Deuda Operativa' : '— No Operativa (Excluida KPI)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.esDeudaOperativa
+                          ? const Color(0xFF047857)
+                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 14),
 

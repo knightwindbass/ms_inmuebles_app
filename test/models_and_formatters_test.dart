@@ -1112,8 +1112,41 @@ void main() {
       expect(dashboard.resumen.deudaTotalConsolidada, equals(43250100.0));
       expect(dashboard.proyectos.length, equals(1));
       expect(dashboard.proyectos.first.name, equals('CEISA'));
+      expect(dashboard.proyectos.first.esDeudaOperativa, isTrue);
       expect(dashboard.proyectos.first.parts?.length, equals(1));
       expect(dashboard.proyectos.first.parts?.first.descripcion, equals('Tramo A - Infraestructura'));
+    });
+
+    test('ProyectoDeudaModel y DeudaResumenModel procesan correctamente flag es_deuda_operativa', () {
+      final pjOperativa = ProyectoDeudaModel.fromJson({
+        "id": 10,
+        "name": "Tuti Machala",
+        "balance": 10554000.0,
+        "es_deuda_operativa": 1,
+      });
+      final pjNoOperativa = ProyectoDeudaModel.fromJson({
+        "id": 11,
+        "name": "Préstamo Accionistas",
+        "balance": 500000.0,
+        "es_deuda_operativa": false,
+      });
+      final resumen = DeudaResumenModel.fromJson({
+        "deuda_total_consolidada": 11054000.0,
+        "saldo_deuda_operativa": 10554000.0,
+        "pago_mensual_registrado": 150000.0,
+        "pago_mensual_operativo": 134679.76,
+        "proyectos_operativos_count": 1,
+        "rentas_mensuales_vigentes": 150000.0,
+        "flujo_neto_mensual": 15320.24,
+        "cobertura_dscr": 1.11,
+      });
+
+      expect(pjOperativa.esDeudaOperativa, isTrue);
+      expect(pjNoOperativa.esDeudaOperativa, isFalse);
+      expect(resumen.saldoDeudaOperativa, equals(10554000.0));
+      expect(resumen.pagoMensualOperativo, equals(134679.76));
+      expect(resumen.proyectosOperativosCount, equals(1));
+      expect(resumen.coberturaDscr, equals(1.11));
     });
   });
 }

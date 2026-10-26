@@ -252,18 +252,45 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Cruce Operativo (Rentas vs Deuda)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Cruce Operativo (Rentas vs Deuda Op)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          if (resumen.coberturaDscr != null) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: resumen.coberturaDscr! >= 1.25
+                                    ? const Color(0xFFDCFCE7)
+                                    : (resumen.coberturaDscr! >= 1.0 ? const Color(0xFFFEF3C7) : const Color(0xFFFEE2E2)),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'DSCR ${resumen.coberturaDscr!.toStringAsFixed(2)}x',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: resumen.coberturaDscr! >= 1.25
+                                      ? const Color(0xFF166534)
+                                      : (resumen.coberturaDscr! >= 1.0 ? const Color(0xFF92400E) : const Color(0xFF991B1B)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        'Rentas: ${AppFormatters.currency(resumen.rentasMensualesVigentes)}/m  •  Deuda: ${AppFormatters.currency(resumen.pagoMensualRegistrado)}/m',
+                        'Rentas: ${AppFormatters.currency(resumen.rentasMensualesVigentes)}/m  •  Deuda Op: ${AppFormatters.currency(resumen.pagoMensualOperativo)}/m (${resumen.proyectosOperativosCount} de ${proyectos.length} consid.)',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                         ),
                       ),
@@ -465,13 +492,44 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      p.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            p.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: p.esDeudaOperativa
+                                ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
+                                : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: p.esDeudaOperativa
+                                  ? const Color(0xFFA7F3D0)
+                                  : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                            ),
+                          ),
+                          child: Text(
+                            p.esDeudaOperativa ? '✓ Op' : '— No Op',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: p.esDeudaOperativa
+                                  ? const Color(0xFF047857)
+                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(

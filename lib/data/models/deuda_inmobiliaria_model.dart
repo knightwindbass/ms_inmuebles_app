@@ -37,6 +37,9 @@ class DeudaResumenModel {
   final double pagoAnualizado;
   final int totalProyectos;
   final double rentasMensualesVigentes;
+  final double pagoMensualOperativo;
+  final double saldoDeudaOperativa;
+  final int proyectosOperativosCount;
   final double flujoNetoMensual;
   final double? coberturaDscr;
 
@@ -49,20 +52,34 @@ class DeudaResumenModel {
     required this.pagoAnualizado,
     required this.totalProyectos,
     required this.rentasMensualesVigentes,
+    this.pagoMensualOperativo = 0.0,
+    this.saldoDeudaOperativa = 0.0,
+    this.proyectosOperativosCount = 0,
     required this.flujoNetoMensual,
     this.coberturaDscr,
   });
 
   factory DeudaResumenModel.fromJson(Map<String, dynamic> json) {
+    final pagoReg = _toDouble(json['pago_mensual_registrado']);
+    final deudaConsol = _toDouble(json['deuda_total_consolidada']);
+    final totalProj = json['total_proyectos'] as int? ?? 0;
+
     return DeudaResumenModel(
-      deudaTotalConsolidada: _toDouble(json['deuda_total_consolidada']),
+      deudaTotalConsolidada: deudaConsol,
       montoOriginalRegistrado: _toDouble(json['monto_original_registrado']),
       reduccionNetaCapital: _toDouble(json['reduccion_neta_capital']),
       porcentajeReduccionTotal: _toDouble(json['porcentaje_reduccion_total']),
-      pagoMensualRegistrado: _toDouble(json['pago_mensual_registrado']),
+      pagoMensualRegistrado: pagoReg,
       pagoAnualizado: _toDouble(json['pago_anualizado']),
-      totalProyectos: json['total_proyectos'] as int? ?? 0,
+      totalProyectos: totalProj,
       rentasMensualesVigentes: _toDouble(json['rentas_mensuales_vigentes']),
+      pagoMensualOperativo: json['pago_mensual_operativo'] != null
+          ? _toDouble(json['pago_mensual_operativo'])
+          : pagoReg,
+      saldoDeudaOperativa: json['saldo_deuda_operativa'] != null
+          ? _toDouble(json['saldo_deuda_operativa'])
+          : deudaConsol,
+      proyectosOperativosCount: json['proyectos_operativos_count'] as int? ?? totalProj,
       flujoNetoMensual: _toDouble(json['flujo_neto_mensual']),
       coberturaDscr: json['cobertura_dscr'] != null ? _toDouble(json['cobertura_dscr']) : null,
     );
@@ -106,6 +123,7 @@ class ProyectoDeudaModel {
   final double capitalReducido;
   final double porcentajeReducido;
   final String tipoAmortizacion;
+  final bool esDeudaOperativa;
   final List<TramoDeudaModel>? parts;
 
   ProyectoDeudaModel({
@@ -125,6 +143,7 @@ class ProyectoDeudaModel {
     required this.capitalReducido,
     required this.porcentajeReducido,
     required this.tipoAmortizacion,
+    this.esDeudaOperativa = true,
     this.parts,
   });
 
@@ -146,6 +165,11 @@ class ProyectoDeudaModel {
       capitalReducido: _toDouble(json['capital_reducido']),
       porcentajeReducido: _toDouble(json['porcentaje_reducido']),
       tipoAmortizacion: json['tipo_amortizacion'] as String? ?? 'frances',
+      esDeudaOperativa: json['es_deuda_operativa'] != null
+          ? (json['es_deuda_operativa'] is bool
+              ? json['es_deuda_operativa'] as bool
+              : (json['es_deuda_operativa'] == 1 || json['es_deuda_operativa'] == '1'))
+          : true,
       parts: (json['parts'] as List<dynamic>?)
           ?.map((e) => TramoDeudaModel.fromJson(e))
           .toList(),
