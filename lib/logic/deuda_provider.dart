@@ -42,4 +42,23 @@ class DeudaProvider extends ChangeNotifier {
   Future<void> refresh() async {
     await fetchDeudaDashboard(forceRefresh: true);
   }
+
+  /// Elimina un proyecto de deuda y actualiza el estado consolidado
+  Future<bool> deleteProyecto(int id) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final success = await _repository.deleteProyecto(id);
+      if (success) {
+        await fetchDeudaDashboard(forceRefresh: true);
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/deuda_inmobiliaria_model.dart';
+import '../../../logic/deuda_provider.dart';
 
 /// Pantalla de Detalle Ejecutivo de Proyecto de Deuda Inmobiliaria
 /// Replicando la experiencia y estética visual del prototipo GenUI / ChatGPT.
@@ -46,6 +48,13 @@ class _ProyectoDeudaDetailScreenState extends State<ProyectoDeudaDetailScreen> {
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+            tooltip: 'Eliminar obligación',
+            onPressed: () => _confirmarEliminacion(context, p),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -650,6 +659,61 @@ class _ProyectoDeudaDetailScreenState extends State<ProyectoDeudaDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _confirmarEliminacion(BuildContext context, ProyectoDeudaModel p) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+            SizedBox(width: 8),
+            Text('Eliminar Pasivo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas dar de baja la obligación crediticia de "${p.name}" por ${AppFormatters.currency(p.balance)}?\n\nEsta acción recalculará los saldos consolidados y el flujo de caja del portafolio.',
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final provider = Provider.of<DeudaProvider>(context, listen: false);
+              final success = await provider.deleteProyecto(p.id);
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Obligación "${p.name}" eliminada exitosamente'),
+                      backgroundColor: const Color(0xFF10B981),
+                    ),
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(provider.errorMessage ?? 'Error al eliminar el pasivo'),
+                      backgroundColor: const Color(0xFFEF4444),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Sí, Eliminar'),
+          ),
+        ],
+      ),
     );
   }
 }

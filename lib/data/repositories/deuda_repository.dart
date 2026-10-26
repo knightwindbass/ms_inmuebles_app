@@ -31,4 +31,14 @@ class DeudaRepository {
     }
     return null;
   }
+
+  /// Elimina (marca como inactivo) un proyecto de pasivo
+  Future<bool> deleteProyecto(int id) async {
+    try {
+      final response = await _client.delete('${ApiConstants.pasivosProyectos}/$id');
+      return response != null;
+    } catch (_) {
+      return false;
+    }
+  }
 }
