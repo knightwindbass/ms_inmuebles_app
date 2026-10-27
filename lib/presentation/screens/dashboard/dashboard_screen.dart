@@ -4,6 +4,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../logic/dashboard_provider.dart';
 import '../../widgets/analytics_slide_block.dart';
 import '../../widgets/deuda_summary_card.dart';
+import '../../widgets/inversion_summary_card.dart';
 import '../../widgets/pareto_summary_card.dart';
 import '../../widgets/portfolio_hero_banner.dart';
 import '../../widgets/smart_kpi_card.dart';
@@ -164,6 +165,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // Sección Ejecutiva: Pasivos & Cuadro de Riesgos Inmobiliarios (Deuda Consolidada)
         const DeudaSummaryCard(),
+        const SizedBox(height: 16),
+
+        // Sección Ejecutiva: Inversión Histórica en Proyectos
+        const InversionSummaryCard(),
         const SizedBox(height: 16),
 
         // Bloque Deslizable (Slide): Tipología & Rentabilidad por Ubicación

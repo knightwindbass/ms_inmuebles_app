@@ -12,6 +12,12 @@ class ApiConstants {
   static const String pasivosDashboard = '/pasivos/dashboard';
   static const String pasivosProyectos = '/pasivos/proyectos';
   static const String pasivosFlujoNeto = '/pasivos/flujo-neto';
+  static const String inversionesHistoricas = '/inversiones/historicas';
+  static const String appVersion = '/app/version';
+
+  // Control de Versión Local Instalada en el Dispositivo
+  static const String currentAppVersion = '2.5.3';
+  static const int currentBuildNumber = 29;
 
   // Headers Multi-Tenant
   static const String headerApiKey = 'x-api-key';

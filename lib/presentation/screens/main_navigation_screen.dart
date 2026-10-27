@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/api_constants.dart';
+import '../../data/services/app_update_service.dart';
 import '../../logic/auth_provider.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'inmuebles/inmuebles_screen.dart';
@@ -20,6 +22,14 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppUpdateService.checkAndShowPrompt(context, manualCheck: false);
+    });
+  }
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -85,6 +95,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                 ),
                 const Divider(height: 24),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.system_update_rounded, color: Color(0xFF0D9488)),
+                  title: const Text('Buscar Actualizaciones'),
+                  subtitle: Text(
+                    'Versión instalada: v${ApiConstants.currentAppVersion} (Build ${ApiConstants.currentBuildNumber})',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    AppUpdateService.checkAndShowPrompt(context, manualCheck: true);
+                  },
+                ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.swap_horiz_rounded),
