@@ -50,18 +50,52 @@ class _TerrenosDashboardScreenState extends State<TerrenosDashboardScreen> {
     super.dispose();
   }
 
+  static String _normalizeSearch(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('–', '-') // en-dash
+        .replaceAll('—', '-') // em-dash
+        .replaceAll('‑', '-') // non-breaking hyphen
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+    final rawQuery = _searchController.text.trim();
     setState(() {
-      if (query.isEmpty) {
+      if (rawQuery.isEmpty) {
         _filteredTerrenos = _terrenos;
       } else {
+        final query = _normalizeSearch(rawQuery);
+        final tokens = query.split(' ').where((w) => w.isNotEmpty).toList();
+
         _filteredTerrenos = _terrenos.where((t) {
-          final matchNombre = t.nombre.toLowerCase().contains(query);
-          final matchCiudad = (t.ciudad ?? '').toLowerCase().contains(query);
-          final matchProv = (t.provincia ?? '').toLowerCase().contains(query);
-          final matchEstado = t.estado.toLowerCase().contains(query);
-          return matchNombre || matchCiudad || matchProv || matchEstado;
+          final normNombre = _normalizeSearch(t.nombre);
+          final normDireccion = _normalizeSearch(t.direccion ?? '');
+          final normCiudad = _normalizeSearch(t.ciudad ?? '');
+          final normProv = _normalizeSearch(t.provincia ?? '');
+          final normPropietario = _normalizeSearch(t.propietario ?? '');
+          final normEstado = _normalizeSearch(t.estado);
+
+          // 1. Coincidencia directa completa en cualquier campo
+          final matchDirect = normNombre.contains(query) ||
+              normDireccion.contains(query) ||
+              normCiudad.contains(query) ||
+              normProv.contains(query) ||
+              normPropietario.contains(query) ||
+              normEstado.contains(query);
+
+          if (matchDirect) return true;
+
+          // 2. Coincidencia multi-token (todas las palabras presentes en cualquier combinación)
+          final combined = '$normNombre $normDireccion $normCiudad $normProv $normPropietario $normEstado';
+          return tokens.isNotEmpty && tokens.every((tok) => combined.contains(tok));
         }).toList();
       }
     });

@@ -45,19 +45,50 @@ class _CategoriaKpiScreenState extends State<CategoriaKpiScreen> {
     super.dispose();
   }
 
+  static String _normalizeSearch(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('‑', '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+    final rawQuery = _searchController.text.trim();
     setState(() {
-      if (query.isEmpty) {
+      if (rawQuery.isEmpty) {
         _filteredInmuebles = _inmuebles;
       } else {
+        final query = _normalizeSearch(rawQuery);
+        final tokens = query.split(' ').where((w) => w.isNotEmpty).toList();
+
         _filteredInmuebles = _inmuebles.where((item) {
-          final matchNombre = item.nombre.toLowerCase().contains(query);
-          final matchCiudad = (item.ciudad ?? '').toLowerCase().contains(query);
-          final matchProv = (item.provincia ?? '').toLowerCase().contains(query);
-          final matchDir = (item.direccion ?? '').toLowerCase().contains(query);
-          final matchEstado = item.estado.toLowerCase().contains(query);
-          return matchNombre || matchCiudad || matchProv || matchDir || matchEstado;
+          final normNombre = _normalizeSearch(item.nombre);
+          final normCiudad = _normalizeSearch(item.ciudad ?? '');
+          final normProv = _normalizeSearch(item.provincia ?? '');
+          final normDir = _normalizeSearch(item.direccion ?? '');
+          final normPropietario = _normalizeSearch(item.propietario ?? '');
+          final normEstado = _normalizeSearch(item.estado);
+
+          final directMatch = normNombre.contains(query) ||
+              normCiudad.contains(query) ||
+              normProv.contains(query) ||
+              normDir.contains(query) ||
+              normPropietario.contains(query) ||
+              normEstado.contains(query);
+
+          if (directMatch) return true;
+
+          final combined = '$normNombre $normDir $normCiudad $normProv $normPropietario $normEstado';
+          return tokens.isNotEmpty && tokens.every((tok) => combined.contains(tok));
         }).toList();
       }
     });
