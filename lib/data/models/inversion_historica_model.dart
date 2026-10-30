@@ -136,7 +136,7 @@ class InversionProyectoModel {
     final double totAreas = areaTot > 0 ? areaTot : (bodega ?? 0.0);
 
     // 4 Fórmulas de cálculo de costo por metro cuadrado ($/m²):
-    final f1Val = bodega != null && bodega > 0 ? (constr / bodega) : _toNullableDouble(json['costo_m2_f1'] ?? json['f1']);
+    final f1Val = bodega != null && bodega > 0 ? ((constr + terr) / bodega) : _toNullableDouble(json['costo_m2_f1'] ?? json['f1']);
     final f2Val = totAreas > 0 ? ((constr + terr) / totAreas) : _toNullableDouble(json['costo_m2_f2'] ?? json['f2']);
     final f3Val = totAreas > 0 ? (constr / totAreas) : _toNullableDouble(json['costo_m2_f3'] ?? json['f3']);
     final f4Val = totAreas > 0 ? ((constr + terr + (fin ?? 0.0)) / totAreas) : _toNullableDouble(json['costo_m2_f4'] ?? json['f4']);

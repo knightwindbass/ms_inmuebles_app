@@ -527,7 +527,7 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
             // Grid de las 4 Fórmulas Secundarias
             Row(
               children: [
-                Expanded(child: _buildFormulaMiniChip('F1 (Constr/Bod)', p.f1, p.formulaPrincipal == 1, isDark)),
+                Expanded(child: _buildFormulaMiniChip('F1 (C+T/Bod)', p.f1, p.formulaPrincipal == 1, isDark)),
                 const SizedBox(width: 6),
                 Expanded(child: _buildFormulaMiniChip('F2 (C+T/Tot)', p.f2, p.formulaPrincipal == 2, isDark)),
                 const SizedBox(width: 6),
