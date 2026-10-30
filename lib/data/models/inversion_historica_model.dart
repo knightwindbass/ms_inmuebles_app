@@ -72,7 +72,15 @@ class InversionProyectoModel {
   final double totalInvertido;
   final double? areaBodega;
   final double? areaPatio;
+  final double? areaTotal;
   final double? patioRatio;
+  final int formulaPrincipal;
+  final String formulaPrincipalLabel;
+  final double? costoM2Principal;
+  final double? f1;
+  final double? f2;
+  final double? f3;
+  final double? f4;
   final double? costoM2Construccion;
   final double? costoM2ConTierra;
   final double? costoM2Total;
@@ -94,7 +102,15 @@ class InversionProyectoModel {
     required this.totalInvertido,
     this.areaBodega,
     this.areaPatio,
+    this.areaTotal,
     this.patioRatio,
+    this.formulaPrincipal = 1,
+    this.formulaPrincipalLabel = 'Fórmula 1 · Constr. / Área Constr.',
+    this.costoM2Principal,
+    this.f1,
+    this.f2,
+    this.f3,
+    this.f4,
     this.costoM2Construccion,
     this.costoM2ConTierra,
     this.costoM2Total,
@@ -113,9 +129,44 @@ class InversionProyectoModel {
     final ratio = _toNullableDouble(json['patio_ratio']);
 
     final totalInv = _toDouble(json['total_invertido'] ?? json['total_con_financieros'] ?? (terr + constr + (fin ?? 0.0)));
-    final cM2Const = bodega != null && bodega > 0 ? (constr / bodega) : _toNullableDouble(json['costo_m2_construccion']);
-    final cM2Tierra = bodega != null && bodega > 0 ? ((constr + terr) / bodega) : _toNullableDouble(json['costo_m2_con_tierra']);
-    final cM2Tot = bodega != null && bodega > 0 ? ((constr + terr + (fin ?? 0.0)) / bodega) : _toNullableDouble(json['costo_m2_total']);
+    
+    // Total de las áreas = Bodega + Patio (o Bodega si Patio no existe)
+    final double? parsedAreaTotal = _toNullableDouble(json['area_total'] ?? json['area_total_m2']);
+    final double areaTot = parsedAreaTotal ?? ((bodega ?? 0.0) + (patio ?? 0.0));
+    final double totAreas = areaTot > 0 ? areaTot : (bodega ?? 0.0);
+
+    // 4 Fórmulas de cálculo de costo por metro cuadrado ($/m²):
+    final f1Val = bodega != null && bodega > 0 ? (constr / bodega) : _toNullableDouble(json['costo_m2_f1'] ?? json['f1']);
+    final f2Val = totAreas > 0 ? ((constr + terr) / totAreas) : _toNullableDouble(json['costo_m2_f2'] ?? json['f2']);
+    final f3Val = totAreas > 0 ? (constr / totAreas) : _toNullableDouble(json['costo_m2_f3'] ?? json['f3']);
+    final f4Val = totAreas > 0 ? ((constr + terr + (fin ?? 0.0)) / totAreas) : _toNullableDouble(json['costo_m2_f4'] ?? json['f4']);
+
+    // Identificación de fórmula principal
+    final rawFormula = json['formula_principal'];
+    final formulaP = rawFormula is int ? rawFormula : (int.tryParse(rawFormula?.toString() ?? '1') ?? 1);
+
+    double? principalVal;
+    String principalLabel = 'F1 · Constr. / Área Constr.';
+    if (formulaP == 1) {
+      principalVal = f1Val ?? f2Val ?? f3Val ?? f4Val;
+      principalLabel = 'F1 · Constr. / Área Constr.';
+    } else if (formulaP == 2) {
+      principalVal = f2Val ?? f1Val ?? f3Val ?? f4Val;
+      principalLabel = 'F2 · (Constr. + Terreno) / Total Áreas';
+    } else if (formulaP == 3) {
+      principalVal = f3Val ?? f1Val ?? f2Val ?? f4Val;
+      principalLabel = 'F3 · Constr. / Total Áreas';
+    } else if (formulaP == 4) {
+      principalVal = f4Val ?? f2Val ?? f1Val ?? f3Val;
+      principalLabel = 'F4 · (Constr. + Terreno + Fin.) / Total Áreas';
+    }
+
+    if (json['costo_m2_principal'] != null) {
+      principalVal = _toNullableDouble(json['costo_m2_principal']) ?? principalVal;
+    }
+    if (json['formula_principal_label'] != null && json['formula_principal_label'].toString().isNotEmpty) {
+      principalLabel = json['formula_principal_label'].toString();
+    }
 
     return InversionProyectoModel(
       id: json['id'] as int? ?? 0,
@@ -131,26 +182,44 @@ class InversionProyectoModel {
       totalInvertido: totalInv,
       areaBodega: bodega,
       areaPatio: patio,
+      areaTotal: totAreas > 0 ? totAreas : null,
       patioRatio: ratio ?? (bodega != null && patio != null && bodega > 0 ? patio / bodega : null),
-      costoM2Construccion: cM2Const,
-      costoM2ConTierra: cM2Tierra,
-      costoM2Total: cM2Tot,
+      formulaPrincipal: formulaP,
+      formulaPrincipalLabel: principalLabel,
+      costoM2Principal: principalVal,
+      f1: f1Val,
+      f2: f2Val,
+      f3: f3Val,
+      f4: f4Val,
+      costoM2Construccion: f1Val,
+      costoM2ConTierra: f2Val,
+      costoM2Total: f4Val,
       nota: (json['nota'] ?? json['observaciones'] ?? '').toString(),
       ciudad: (json['ciudad'] ?? '').toString(),
       inquilino: (json['inquilino_principal'] ?? json['inquilino'] ?? '').toString(),
     );
   }
 
-  // Costo por m² calculado para cualquier superficie simulada
-  double? simularCostoConstruccion(double superficie) {
+  // Simulación para cualquier superficie simulada usando la fórmula elegida
+  double? simularFormula(int formula, double superficie) {
     if (superficie <= 0) return null;
-    return construccion / superficie;
+    switch (formula) {
+      case 1:
+        return construccion / superficie;
+      case 2:
+        return (construccion + terreno) / superficie;
+      case 3:
+        return construccion / superficie;
+      case 4:
+        return (construccion + terreno + (financieros ?? 0.0)) / superficie;
+      default:
+        return construccion / superficie;
+    }
   }
 
-  double? simularCostoConTierra(double superficie) {
-    if (superficie <= 0) return null;
-    return (construccion + terreno) / superficie;
-  }
+  double? simularCostoConstruccion(double superficie) => simularFormula(1, superficie);
+  double? simularCostoConTierra(double superficie) => simularFormula(2, superficie);
+  double? simularCostoPrincipal(double superficie) => simularFormula(formulaPrincipal, superficie);
 }
 
 double _toDouble(dynamic val) {

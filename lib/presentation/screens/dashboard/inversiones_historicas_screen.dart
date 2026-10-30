@@ -14,6 +14,7 @@ class InversionesHistoricasScreen extends StatefulWidget {
 }
 
 class _InversionesHistoricasScreenState extends State<InversionesHistoricasScreen> {
+  static const Color colorTeal = Color(0xFF0D9488);
   @override
   void initState() {
     super.initState();
@@ -32,6 +33,46 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
     if (lower.contains('intermedia')) return const Color(0xFFD97706);
     if (lower.contains('oficina')) return const Color(0xFF9333EA);
     return const Color(0xFF64748B);
+  }
+
+  Widget _buildFormulaMiniChip(String label, double? val, bool isActive, bool isDark) {
+    const activeColor = Color(0xFF0D9488);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      decoration: BoxDecoration(
+        color: isActive
+            ? (isDark ? const Color(0xFF0F2E2B) : const Color(0xFFE6FFFA))
+            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isActive ? activeColor : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: isActive ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 8.5,
+              fontWeight: FontWeight.w700,
+              color: isActive ? activeColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            val != null ? AppFormatters.compactCurrency(val) : '–',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: isActive ? (isDark ? Colors.white : const Color(0xFF0F766E)) : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E293B)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -342,13 +383,9 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
   }
 
   Widget _buildProjectCard(BuildContext context, InversionProyectoModel p, bool isDark) {
-    const colorTeal = Color(0xFF0D9488);
-    final qualityColor = _getQualityColor(p.categoriaCalidad);
-    final costConstStr = p.costoM2Construccion != null
-        ? '${AppFormatters.currency(p.costoM2Construccion)} / m²'
-        : 'Área pendiente';
-    final costHardStr = p.costoM2ConTierra != null
-        ? '${AppFormatters.currency(p.costoM2ConTierra)} / m²'
+        final qualityColor = _getQualityColor(p.categoriaCalidad);
+    final mainCostStr = p.costoM2Principal != null
+        ? '${AppFormatters.currency(p.costoM2Principal)} / m²'
         : 'Área pendiente';
 
     return Container(
@@ -422,7 +459,7 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
 
             const SizedBox(height: 12),
 
-            // Hero Metric Box: Construcción sin Tierra / m²
+            // Hero Metric Box: Métrica Principal según la Fórmula Asignada (F1, F2, F3 o F4)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -435,18 +472,39 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
               ),
               child: Column(
                 children: [
-                  Text(
-                    'CONSTRUCCIÓN SIN TIERRA / m² DE BODEGA',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                      color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorTeal,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'F${p.formulaPrincipal}',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        p.formulaPrincipalLabel.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                          color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(
-                    costConstStr,
+                    mainCostStr,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -454,7 +512,7 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
                     ),
                   ),
                   Text(
-                    'Construcción: ${AppFormatters.currency(p.construccion)}',
+                    'Inversión Total: ${AppFormatters.currency(p.totalInvertido)}',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -466,33 +524,17 @@ class _InversionesHistoricasScreenState extends State<InversionesHistoricasScree
 
             const SizedBox(height: 10),
 
-            // Hard Costs Box (Construcción + Tierra)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Construcción + Tierra:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  Text(
-                    costHardStr,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
+            // Grid de las 4 Fórmulas Secundarias
+            Row(
+              children: [
+                Expanded(child: _buildFormulaMiniChip('F1 (Constr/Bod)', p.f1, p.formulaPrincipal == 1, isDark)),
+                const SizedBox(width: 6),
+                Expanded(child: _buildFormulaMiniChip('F2 (C+T/Tot)', p.f2, p.formulaPrincipal == 2, isDark)),
+                const SizedBox(width: 6),
+                Expanded(child: _buildFormulaMiniChip('F3 (Constr/Tot)', p.f3, p.formulaPrincipal == 3, isDark)),
+                const SizedBox(width: 6),
+                Expanded(child: _buildFormulaMiniChip('F4 (C+T+Fin/Tot)', p.f4, p.formulaPrincipal == 4, isDark)),
+              ],
             ),
 
             const SizedBox(height: 10),
@@ -618,12 +660,13 @@ class _AreaSimulationBottomSheetState extends State<_AreaSimulationBottomSheet> 
   Widget build(BuildContext context) {
     final p = widget.project;
     final isDark = widget.isDark;
-    const colorTeal = Color(0xFF0D9488);
-
-    final simConst = p.simularCostoConstruccion(_currentArea);
-    final simHard = p.simularCostoConTierra(_currentArea);
-    final simLand = _currentArea > 0 ? (p.terreno / _currentArea) : 0.0;
-
+    
+    final simPrincipal = p.simularCostoPrincipal(_currentArea);
+    final simF1 = p.simularFormula(1, _currentArea);
+    final simF2 = p.simularFormula(2, _currentArea);
+    final simF3 = p.simularFormula(3, _currentArea);
+    final simF4 = p.simularFormula(4, _currentArea);
+    
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -698,7 +741,7 @@ class _AreaSimulationBottomSheetState extends State<_AreaSimulationBottomSheet> 
             child: Column(
               children: [
                 Text(
-                  'SOLO CONSTRUCCIÓN PROYECTADA',
+                  '${p.formulaPrincipalLabel.toUpperCase()} (SIMULADA)',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -707,27 +750,43 @@ class _AreaSimulationBottomSheetState extends State<_AreaSimulationBottomSheet> 
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  simConst != null ? '${AppFormatters.currency(simConst)} / m²' : 'Pendiente',
+                  simPrincipal != null ? '${AppFormatters.currency(simPrincipal)} / m²' : 'Pendiente',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     color: isDark ? Colors.white : const Color(0xFF0F766E),
                   ),
                 ),
-                const Divider(height: 20),
+                const Divider(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Construcción + Tierra:', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                    Text(simHard != null ? '${AppFormatters.currency(simHard)} / m²' : '–', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    Text('F1 (Constr/Bod):', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                    Text(simF1 != null ? '${AppFormatters.currency(simF1)} / m²' : '–', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Incidencia Terreno:', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                    Text('${AppFormatters.currency(simLand)} / m²', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    Text('F2 (Constr+Tierra/Tot):', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                    Text(simF2 != null ? '${AppFormatters.currency(simF2)} / m²' : '–', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('F3 (Constr/Tot):', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                    Text(simF3 != null ? '${AppFormatters.currency(simF3)} / m²' : '–', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('F4 (C+T+Fin/Tot):', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                    Text(simF4 != null ? '${AppFormatters.currency(simF4)} / m²' : '–', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
                   ],
                 ),
               ],
