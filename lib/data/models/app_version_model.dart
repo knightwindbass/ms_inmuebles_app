@@ -29,7 +29,7 @@ class AppVersionInfo {
   factory AppVersionInfo.fromJson(Map<String, dynamic> json) {
     return AppVersionInfo(
       success: json['success'] == true,
-      latestVersion: (json['latest_version'] ?? '2.5.5').toString().trim(),
+      latestVersion: (json['latest_version'] ?? '2.5.6').toString().trim(),
       buildNumber: _toInt(json['build_number'], 31),
       minRequiredVersion: (json['min_required_version'] ?? '2.5.0').toString().trim(),
       isMandatory: json['is_mandatory'] == true || json['is_mandatory'] == 1,

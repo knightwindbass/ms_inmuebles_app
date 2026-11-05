@@ -205,7 +205,7 @@ class InversionProyectoModel {
     if (superficie <= 0) return null;
     switch (formula) {
       case 1:
-        return construccion / superficie;
+        return (construccion + terreno) / superficie;
       case 2:
         return (construccion + terreno) / superficie;
       case 3:
