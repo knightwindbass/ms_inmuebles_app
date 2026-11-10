@@ -295,6 +295,27 @@ class _ProyectoDeudaDetailScreenState extends State<ProyectoDeudaDetailScreen> {
                           : Colors.amber[700],
                     ),
                   ),
+                  if (p.amortizacionMensualFija != null && p.amortizacionMensualFija! > 0) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFA7F3D0),
+                        ),
+                      ),
+                      child: Text(
+                        'Amortización fija de capital: ${AppFormatters.currency(p.amortizacionMensualFija!)} / mes',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: colorTeal,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -1,12 +1,18 @@
 /// Modelo de datos para Pasivos y Riesgos Inmobiliarios (Cuadro de Deuda Consolidada).
 class DeudaDashboardModel {
   final String corteFecha;
+  final String? corteMesNombre;
+  final String? metodoCalculo;
+  final int? mesesTranscurridos;
   final DeudaResumenModel resumen;
   final List<BancoDistribucionModel> distribucionBancos;
   final List<ProyectoDeudaModel> proyectos;
 
   DeudaDashboardModel({
     required this.corteFecha,
+    this.corteMesNombre,
+    this.metodoCalculo,
+    this.mesesTranscurridos,
     required this.resumen,
     required this.distribucionBancos,
     required this.proyectos,
@@ -15,6 +21,9 @@ class DeudaDashboardModel {
   factory DeudaDashboardModel.fromJson(Map<String, dynamic> json) {
     return DeudaDashboardModel(
       corteFecha: json['corte_fecha'] as String? ?? '30 de septiembre de 2026',
+      corteMesNombre: json['corte_mes_nombre'] as String?,
+      metodoCalculo: json['metodo_calculo'] as String?,
+      mesesTranscurridos: json['meses_transcurridos'] as int?,
       resumen: DeudaResumenModel.fromJson(json['resumen'] as Map<String, dynamic>? ?? {}),
       distribucionBancos: (json['distribucion_bancos'] as List<dynamic>?)
               ?.map((e) => BancoDistribucionModel.fromJson(e as Map<String, dynamic>))
@@ -114,6 +123,7 @@ class ProyectoDeudaModel {
   final double original;
   final double balance;
   final double? monthly;
+  final double? amortizacionMensualFija;
   final String start;
   final String end;
   final String rate;
@@ -134,6 +144,7 @@ class ProyectoDeudaModel {
     required this.original,
     required this.balance,
     this.monthly,
+    this.amortizacionMensualFija,
     required this.start,
     required this.end,
     required this.rate,
@@ -156,6 +167,9 @@ class ProyectoDeudaModel {
       original: _toDouble(json['original']),
       balance: _toDouble(json['balance']),
       monthly: json['monthly'] != null ? _toDouble(json['monthly']) : null,
+      amortizacionMensualFija: json['amortizacion_mensual_fija'] != null
+          ? _toDouble(json['amortizacion_mensual_fija'])
+          : null,
       start: json['start'] as String? ?? '',
       end: json['end'] as String? ?? '',
       rate: json['rate'] as String? ?? '',
@@ -183,6 +197,7 @@ class TramoDeudaModel {
   final String banco;
   final double monto;
   final double? cuota;
+  final double? amortizacionMensualFija;
   final String inicio;
   final String fin;
   final int? pagadas;
@@ -196,6 +211,7 @@ class TramoDeudaModel {
     required this.banco,
     required this.monto,
     this.cuota,
+    this.amortizacionMensualFija,
     required this.inicio,
     required this.fin,
     this.pagadas,
@@ -226,6 +242,7 @@ class TramoDeudaModel {
       banco: map['banco'] as String? ?? '',
       monto: _toDouble(map['monto'] ?? map['monto_original']),
       cuota: map['cuota'] != null ? _toDouble(map['cuota']) : (map['cuota_mensual'] != null ? _toDouble(map['cuota_mensual']) : null),
+      amortizacionMensualFija: map['amortizacion_mensual_fija'] != null ? _toDouble(map['amortizacion_mensual_fija']) : null,
       inicio: map['inicio'] as String? ?? (map['fecha_inicio'] as String? ?? ''),
       fin: map['fin'] as String? ?? (map['fecha_vencimiento'] as String? ?? ''),
       pagadas: map['pagadas'] as int? ?? (map['cuotas_pagadas'] as int?),

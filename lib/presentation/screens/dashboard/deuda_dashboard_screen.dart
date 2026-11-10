@@ -369,7 +369,7 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
               ),
             ),
             Text(
-              'Base corte Septiembre',
+              'Base corte ${data.corteMesNombre ?? _extractMes(data.corteFecha)}',
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -395,7 +395,7 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
             ),
           ),
           child: Text(
-            'Base oficial: Cuadro de Riesgos Inmobiliarios ESLIVE, corte al 30 de septiembre de 2026. Los porcentajes reflejan reducción neta de capital. Obligaciones sujetas a consolidación bancaria en noviembre de 2026.',
+            'Base oficial: Cuadro de Riesgos Inmobiliarios ESLIVE, corte al ${data.corteFecha}. Los porcentajes reflejan reducción neta de capital acumulada.',
             style: TextStyle(
               fontSize: 11,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -406,6 +406,14 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  String _extractMes(String corte) {
+    final parts = corte.toLowerCase().split(' ');
+    if (parts.length >= 3 && parts[1] == 'de') {
+      return parts[2][0].toUpperCase() + parts[2].substring(1);
+    }
+    return 'Mes actual';
   }
 
   Widget _buildKpiChip({
@@ -541,6 +549,17 @@ class _DeudaDashboardScreenState extends State<DeudaDashboardScreen> {
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
+                    if (p.amortizacionMensualFija != null && p.amortizacionMensualFija! > 0) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Reducción fija: ${AppFormatters.currency(p.amortizacionMensualFija!)}/m',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: colorTeal,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
