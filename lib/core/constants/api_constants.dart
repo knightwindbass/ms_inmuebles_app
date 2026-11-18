@@ -17,7 +17,7 @@ class ApiConstants {
 
   // Control de Versión Local Instalada en el Dispositivo
   static const String currentAppVersion = '2.5.6';
-  static const int currentBuildNumber = 33;
+  static const int currentBuildNumber = 34;
 
   // Headers Multi-Tenant
   static const String headerApiKey = 'x-api-key';
