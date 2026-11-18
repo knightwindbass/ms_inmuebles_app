@@ -22,6 +22,7 @@ class AppTheme {
   static const Color statusRentado = Color(0xFF10B981); // Verde #10b981
   static const Color statusMantenimiento = Color(0xFFF59E0B); // Naranja #f59e0b
   static const Color statusInactivo = Color(0xFF94A3B8); // Gris #94a3b8
+  static const Color statusVendido = Color(0xFF7E22CE); // Púrpura #7e22ce para Inmuebles Vendidos
 
   // Colores para Land Banking
   static const Color statusAportado = Color(0xFF8B5CF6); // Morado #8b5cf6
@@ -45,6 +46,9 @@ class AppTheme {
     }
     if (est.contains('manten')) {
       return statusMantenimiento;
+    }
+    if (est.contains('vendid') || est.contains('enajenad')) {
+      return statusVendido;
     }
     if (est.contains('disp') || est.contains('libre')) {
       return statusDisponible;

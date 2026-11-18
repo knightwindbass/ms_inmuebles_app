@@ -30,12 +30,14 @@ class ApiConstants {
   static const String estadoRentado = 'rentado';
   static const String estadoMantenimiento = 'mantenimiento';
   static const String estadoInactivo = 'inactivo';
+  static const String estadoVendido = 'vendido';
 
   static const List<String> estadosInmueble = [
     estadoDisponible,
     estadoRentado,
     estadoMantenimiento,
     estadoInactivo,
+    estadoVendido,
   ];
 
   // Catálogos - Tipologías de Inmuebles

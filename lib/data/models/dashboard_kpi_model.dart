@@ -234,9 +234,11 @@ class InmueblesDesglose {
   final int rentados;
   final int mantenimiento;
   final int inactivo;
+  final int vendidos;
 
   // Métricas específicas de Land Banking (Terrenos)
   final double areaTotal;
+  final double areaVendida;
   final int aportados;
   final int disponibleSinRellenar;
   final int enDesarrollo;
@@ -249,7 +251,9 @@ class InmueblesDesglose {
     this.rentados = 0,
     this.mantenimiento = 0,
     this.inactivo = 0,
+    this.vendidos = 0,
     this.areaTotal = 0.0,
+    this.areaVendida = 0.0,
     this.aportados = 0,
     this.disponibleSinRellenar = 0,
     this.enDesarrollo = 0,
@@ -270,12 +274,16 @@ class InmueblesDesglose {
     }
 
     if (rawJson is List) {
-      int d = 0, r = 0, m = 0, i = 0, tot = 0;
+      int d = 0, r = 0, m = 0, i = 0, v = 0, tot = 0;
       for (final item in rawJson) {
         if (item is Map<String, dynamic>) {
           final est = (item['estado'] ?? item['status'] ?? item['tipo'] ?? '').toString().toLowerCase();
           final cnt = _toInt(item['conteo'] ?? item['cantidad'] ?? item['total'] ?? item['count']);
-          tot += cnt;
+          if (est.contains('vendid') || est.contains('enajenad')) {
+            v += cnt;
+          } else {
+            tot += cnt;
+          }
           if (est.contains('disp') || est.contains('libre')) {
             d += cnt;
           } else if (est.contains('rent') || est.contains('ocup')) {
@@ -287,7 +295,14 @@ class InmueblesDesglose {
           }
         }
       }
-      return InmueblesDesglose(total: tot, disponibles: d, rentados: r, mantenimiento: m, inactivo: i);
+      return InmueblesDesglose(
+        total: tot,
+        disponibles: d,
+        rentados: r,
+        mantenimiento: m,
+        inactivo: i,
+        vendidos: v,
+      );
     }
 
     if (rawJson is Map<String, dynamic>) {
@@ -302,12 +317,14 @@ class InmueblesDesglose {
     final rent = _toInt(json['rentados'] ?? json['rentado'] ?? json['ocupados'] ?? json['ocupado'] ?? json['arrendados'] ?? json['arrendado']);
     final mant = _toInt(json['mantenimiento'] ?? json['en_mantenimiento'] ?? json['reparacion']);
     final inac = _toInt(json['inactivo'] ?? json['inactivos'] ?? json['desactivados']);
+    final vend = _toInt(json['vendidos'] ?? json['vendido'] ?? json['enajenados'] ?? json['enajenado']);
 
     // Soporte Land Banking
     final aport = _toInt(json['aportado'] ?? json['aportados'] ?? json['fideicomiso']);
     final sinRellenar = _toInt(json['disponible_sin_rellenar'] ?? json['sin_rellenar'] ?? json['crudo']);
     final enDesarr = _toInt(json['en_desarrollo'] ?? json['en_desarrollo_rellenado'] ?? json['rellenado']);
     final areaTot = _toDouble(json['area_total'] ?? json['reserva_territorial'] ?? json['superficie_total'] ?? json['area']);
+    final areaVend = _toDouble(json['area_vendida'] ?? json['area_enajenada'] ?? json['area_vendidos']);
     final valorM2Prom = _toDouble(json['valor_m2_promedio'] ?? json['precio_m2_promedio'] ?? json['valor_promedio_m2'] ?? json['m2_promedio']);
     final valorTot = _toDouble(json['valor_total'] ?? json['valor_referencial'] ?? json['valor_referencial_total'] ?? json['valuacion_total']);
 
@@ -322,7 +339,9 @@ class InmueblesDesglose {
       rentados: rent,
       mantenimiento: mant,
       inactivo: inac,
+      vendidos: vend,
       areaTotal: areaTot,
+      areaVendida: areaVend,
       aportados: aport,
       disponibleSinRellenar: sinRellenar,
       enDesarrollo: enDesarr,

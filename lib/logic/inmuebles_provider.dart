@@ -92,8 +92,11 @@ class InmueblesProvider extends ChangeNotifier {
   /// Conteo de inmuebles disponibles leasables
   int get totalDisponibles => leasableInmuebles.where((i) => i.isDisponible).length;
 
-  /// Conteo de inmuebles en otros estados (mantenimiento / inactivo)
-  int get totalOtrosEstados => leasableInmuebles.where((i) => !i.isRentado && !i.isDisponible).length;
+  /// Conteo de inmuebles en otros estados operativos (mantenimiento / inactivo)
+  int get totalOtrosEstados => leasableInmuebles.where((i) => !i.isRentado && !i.isDisponible && !i.isVendido).length;
+
+  /// Conteo de inmuebles vendidos / enajenados (desincorporados)
+  int get totalVendidos => leasableInmuebles.where((i) => i.isVendido).length;
 
   /// Suma de área total (m²) de unidades leasables efectivas
   double get totalAreaAudit {

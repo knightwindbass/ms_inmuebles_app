@@ -312,7 +312,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: SmartKpiCard(
                   title: 'Ocupación (m²)',
                   value: '${kpis.displayTasaOcupacion.toStringAsFixed(1)}%',
-                  subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² rentados de ${AppFormatters.number(areaTotal.toInt())} m²',
+                  subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² rentados de ${AppFormatters.number(areaTotal.toInt())} m² (Excluye vendidos)',
                   isSubtitleHighlighted: true,
                   icon: Icons.trending_up_rounded,
                   iconBgColor: const Color(0xFF2563EB),
@@ -348,7 +348,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: SmartKpiCard(
                   title: 'Área total rentable',
                   value: '${AppFormatters.number(areaTotal.toInt())} m²',
-                  subtitle: 'Portafolio consolidado',
+                  subtitle: kpis.inmuebles.vendidos > 0 ? 'Portafolio activo (excl. vendidos)' : 'Portafolio consolidado',
                   icon: Icons.crop_free_rounded,
                   iconBgColor: Colors.transparent,
                   iconColor: const Color(0xFF475569),
@@ -608,20 +608,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${kpis.inmuebles.total} Unidades',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFF59E0B),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (kpis.inmuebles.vendidos > 0) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7E22CE).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${kpis.inmuebles.vendidos} Vendidos',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF7E22CE),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          kpis.inmuebles.vendidos > 0
+                              ? '${kpis.inmuebles.total} Activas'
+                              : '${kpis.inmuebles.total} Unidades',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFF59E0B),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

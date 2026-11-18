@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ms_inmuebles_app/core/constants/api_constants.dart';
 import 'package:ms_inmuebles_app/core/theme/app_theme.dart';
 import 'package:ms_inmuebles_app/core/utils/formatters.dart';
 import 'package:ms_inmuebles_app/data/models/dashboard_kpi_model.dart';
@@ -1147,6 +1148,84 @@ void main() {
       expect(resumen.pagoMensualOperativo, equals(134679.76));
       expect(resumen.proyectosOperativosCount, equals(1));
       expect(resumen.coberturaDscr, equals(1.11));
+    });
+
+    test('ApiConstants expone estadoVendido y lo incluye en la lista de estados para filtros', () {
+      expect(ApiConstants.estadoVendido, equals('vendido'));
+      expect(ApiConstants.estadosInmueble, contains(ApiConstants.estadoVendido));
+    });
+
+    test('InmuebleModel reconoce propiedades enajenadas con isVendido', () {
+      final inm1 = InmuebleModel(id: 1, nombre: 'Bodega M1-01', tipo: 'Bodega', valorRentaBase: 1000, estado: 'vendido');
+      final inm2 = InmuebleModel(id: 2, nombre: 'Bodega M1-02', tipo: 'Bodega', valorRentaBase: 1000, estado: 'enajenado');
+      final inm3 = InmuebleModel(id: 3, nombre: 'Bodega M2-01', tipo: 'Bodega', valorRentaBase: 1000, estado: 'rentado');
+
+      expect(inm1.isVendido, isTrue);
+      expect(inm1.isRentado, isFalse);
+      expect(inm1.isDisponible, isFalse);
+
+      expect(inm2.isVendido, isTrue);
+      expect(inm3.isVendido, isFalse);
+      expect(inm3.isRentado, isTrue);
+    });
+
+    test('InmueblesDesglose deserializa vendidos y área vendida excluyéndolos del total leasable activo', () {
+      final jsonSample = {
+        "total": 100,
+        "rentado": 80,
+        "disponible": 15,
+        "mantenimiento": 5,
+        "vendidos": 12,
+        "area_total": 25000.0,
+        "area_vendida": 4500.0,
+      };
+
+      final desglose = InmueblesDesglose.fromMap(jsonSample);
+      expect(desglose.total, equals(100));
+      expect(desglose.vendidos, equals(12));
+      expect(desglose.areaVendida, equals(4500.0));
+
+      // Fallback total sin valor explícito de total: debe sumar únicamente activos operativos (80+15+5=100) y no sumar los 12 vendidos
+      final jsonFallback = {
+        "rentados": 80,
+        "disponibles": 15,
+        "mantenimiento": 5,
+        "vendidos": 12,
+      };
+      final desgloseFallback = InmueblesDesglose.fromMap(jsonFallback);
+      expect(desgloseFallback.total, equals(100));
+      expect(desgloseFallback.vendidos, equals(12));
+
+      // Deserialización desde List de estados
+      final listSample = [
+        {"estado": "rentado", "cantidad": 50},
+        {"estado": "disponible", "cantidad": 10},
+        {"estado": "mantenimiento", "cantidad": 2},
+        {"estado": "vendido", "cantidad": 8},
+      ];
+      final desgloseList = InmueblesDesglose.fromJson(listSample);
+      expect(desgloseList.total, equals(62));
+      expect(desgloseList.vendidos, equals(8));
+      expect(desgloseList.rentados, equals(50));
+      expect(desgloseList.disponibles, equals(10));
+    });
+
+    test('InmueblesProvider contabiliza correctamente activos vendidos en totalVendidos y totalOtrosEstados', () async {
+      final mockData = [
+        InmuebleModel(id: 1, nombre: 'Bodega M1-01', tipo: 'Bodega', valorRentaBase: 1000, estado: 'rentado'),
+        InmuebleModel(id: 2, nombre: 'Bodega M1-02', tipo: 'Bodega', valorRentaBase: 1000, estado: 'disponible'),
+        InmuebleModel(id: 3, nombre: 'Bodega M1-03', tipo: 'Bodega', valorRentaBase: 1000, estado: 'mantenimiento'),
+        InmuebleModel(id: 4, nombre: 'Bodega M1-04', tipo: 'Bodega', valorRentaBase: 1000, estado: 'vendido'),
+        InmuebleModel(id: 5, nombre: 'Bodega M1-05', tipo: 'Bodega', valorRentaBase: 1000, estado: 'vendido'),
+      ];
+
+      final provider = InmueblesProvider(_FakeInmueblesRepository(mockData));
+      await provider.fetchInmuebles();
+
+      expect(provider.totalRentados, equals(1));
+      expect(provider.totalDisponibles, equals(1));
+      expect(provider.totalOtrosEstados, equals(1)); // solo mantenimiento, no incluye vendidos
+      expect(provider.totalVendidos, equals(2)); // las 2 bodegas vendidas
     });
   });
 }

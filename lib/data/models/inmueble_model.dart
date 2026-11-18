@@ -43,6 +43,7 @@ class InmuebleModel {
   bool get isDisponible => estado.toLowerCase() == 'disponible';
   bool get isMantenimiento => estado.toLowerCase() == 'mantenimiento';
   bool get isInactivo => estado.toLowerCase() == 'inactivo';
+  bool get isVendido => estado.toLowerCase() == 'vendido' || estado.toLowerCase() == 'enajenado';
 
   bool get isMatriz => (propiedadPadreId == null || propiedadPadreId == 0) && (tipo.toLowerCase() == 'edificio' || subunidades.isNotEmpty);
   bool get isSubunidad => propiedadPadreId != null && propiedadPadreId! > 0;
