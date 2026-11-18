@@ -311,7 +311,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: SmartKpiCard(
                   title: 'Ocupación (m²)',
-                  value: '${kpis.displayTasaOcupacion.toStringAsFixed(1)}%',
+                  value: '${kpis.displayTasaOcupacion % 1 == 0 ? kpis.displayTasaOcupacion.toInt() : kpis.displayTasaOcupacion.toStringAsFixed(2)}%',
                   subtitle: '${AppFormatters.number(kpis.displayAreaOcupada.toInt())} m² rentados de ${AppFormatters.number(areaTotal.toInt())} m² (Excluye vendidos)',
                   isSubtitleHighlighted: true,
                   icon: Icons.trending_up_rounded,

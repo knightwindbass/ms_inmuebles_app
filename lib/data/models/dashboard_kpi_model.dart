@@ -197,10 +197,18 @@ class DashboardKpiModel {
       ingresosMensualesProyectados: _toDouble(rawMrr),
       distribucionTiposEstado: normalizedDistribution,
       rentabilidadUbicacion: parsedRentabilidad,
-      rentaMensualBase: json['renta_mensual_base'] != null ? _toDouble(json['renta_mensual_base']) : null,
-      areaTotalRentable: json['area_total_rentable'] != null ? _toDouble(json['area_total_rentable']) : null,
-      areaOcupada: json['area_ocupada'] != null ? _toDouble(json['area_ocupada']) : null,
-      areaVacante: json['area_vacante'] != null ? _toDouble(json['area_vacante']) : null,
+      rentaMensualBase: json['renta_mensual_base'] != null
+          ? _toDouble(json['renta_mensual_base'])
+          : (rawMrr != null ? _toDouble(rawMrr) : null),
+      areaTotalRentable: json['area_total_rentable'] != null
+          ? _toDouble(json['area_total_rentable'])
+          : (json['inmuebles'] is Map ? _toDouble(json['inmuebles']['area_total']) : null),
+      areaOcupada: json['area_ocupada'] != null
+          ? _toDouble(json['area_ocupada'])
+          : (json['inmuebles'] is Map ? _toDouble(json['inmuebles']['area_rentada']) : null),
+      areaVacante: json['area_vacante'] != null
+          ? _toDouble(json['area_vacante'])
+          : null,
       rentaPromedioM2: json['renta_promedio_m2'] != null ? _toDouble(json['renta_promedio_m2']) : null,
       rentaPotencialTotal: json['renta_potencial_total'] != null ? _toDouble(json['renta_potencial_total']) : null,
       tendenciaRentaMensual: json['tendencia_renta_mensual']?.toString(),

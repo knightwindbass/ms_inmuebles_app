@@ -135,10 +135,15 @@ class DashboardProvider extends ChangeNotifier {
         .where((id) => id != null && id > 0)
         .toSet();
 
-    // Unidades arrendables comerciales: hijas o propiedades independientes sin subunidades (excluyendo Terrenos)
-    final leasableUnits = list.where((e) => e.tipo.toLowerCase() != 'terreno' && !parentIds.contains(e.id)).toList();
+    // Unidades arrendables comerciales: hijas o propiedades independientes sin subunidades
+    // REGLA CRÍTICA: Excluir estrictamente Terrenos y activos Vendidos/Enajenados (Desincorporados de la operación activa)
+    final leasableUnits = list.where((e) => 
+        e.tipo.toLowerCase() != 'terreno' && 
+        !e.isVendido && 
+        !parentIds.contains(e.id)
+    ).toList();
 
-    // 1. Área total rentable (m²): suma de metrajes de unidades arrendables
+    // 1. Área total rentable (m²): suma de metrajes de unidades arrendables activas
     final double computedAreaTotal = leasableUnits.fold(0.0, (sum, u) => sum + (u.metraje ?? 0.0));
 
     // 2. Área ocupada / rentada (m²): suma de metrajes de unidades arrendables en estado 'rentado'
@@ -160,18 +165,26 @@ class DashboardProvider extends ChangeNotifier {
         ? baseKpis.ingresosMensualesProyectados
         : computedRentaInmuebles;
 
-    // 5. Tasa de ocupación en m²: (m² rentados / m² rentables) * 100
-    final double computedTasaOcupacionM2 = (computedAreaTotal > 0)
-        ? ((computedAreaOcupada / computedAreaTotal) * 100)
-        : baseKpis.tasaOcupacion;
+    // 5. Tasa de ocupación en m²: Si la tasa viene calculada del servidor (> 0), respetarla prioritariamente para coherencia con la web
+    final double computedTasaOcupacionM2 = (baseKpis.tasaOcupacion > 0)
+        ? baseKpis.tasaOcupacion
+        : ((computedAreaTotal > 0) ? ((computedAreaOcupada / computedAreaTotal) * 100) : 0.0);
 
     // 6. Renta Promedio Portafolio: Renta mensual base / Total m² rentados
-    final double computedRentaPromedioM2 = (computedAreaOcupada > 0)
-        ? (effectiveRentaMensual / computedAreaOcupada)
+    final double effectiveAreaOcupada = (baseKpis.areaOcupada != null && baseKpis.areaOcupada! > 0)
+        ? baseKpis.areaOcupada!
+        : computedAreaOcupada;
+
+    final double computedRentaPromedioM2 = (effectiveAreaOcupada > 0)
+        ? (effectiveRentaMensual / effectiveAreaOcupada)
         : 0.0;
 
     // 7. Renta Potencial (100%): Renta Promedio ($/m²) * Total Área Rentable
-    final double computedRentaPotencial = (computedRentaPromedioM2 * computedAreaTotal);
+    final double effectiveAreaTotal = (baseKpis.areaTotalRentable != null && baseKpis.areaTotalRentable! > 0)
+        ? baseKpis.areaTotalRentable!
+        : computedAreaTotal;
+
+    final double computedRentaPotencial = (computedRentaPromedioM2 * effectiveAreaTotal);
 
     // 8. Rentabilidad por Ubicación (Complejos Rentados)
     List<RentabilidadUbicacion> effectiveRentabilidad = baseKpis.rentabilidadUbicacion;
@@ -205,7 +218,7 @@ class DashboardProvider extends ChangeNotifier {
       areaTotalRentable: baseKpis.areaTotalRentable ?? computedAreaTotal,
       areaOcupada: baseKpis.areaOcupada ?? computedAreaOcupada,
       areaVacante: baseKpis.areaVacante ?? computedAreaVacante,
-      tasaOcupacion: computedAreaTotal > 0 ? computedTasaOcupacionM2 : baseKpis.tasaOcupacion,
+      tasaOcupacion: baseKpis.tasaOcupacion > 0 ? baseKpis.tasaOcupacion : computedTasaOcupacionM2,
       rentaPromedioM2: baseKpis.rentaPromedioM2 ?? computedRentaPromedioM2,
       rentaPotencialTotal: baseKpis.rentaPotencialTotal ?? computedRentaPotencial,
       rentabilidadUbicacion: effectiveRentabilidad,
@@ -217,6 +230,7 @@ class DashboardProvider extends ChangeNotifier {
     int rent = 0;
     int mant = 0;
     int inac = 0;
+    int vend = 0;
 
     int pAct = 0;
     int pInac = 0;
@@ -234,12 +248,19 @@ class DashboardProvider extends ChangeNotifier {
         .map((e) => e.propiedadPadreId)
         .where((id) => id != null && id > 0)
         .toSet();
-    final leasableUnits = list.where((e) => !parentIds.contains(e.id)).toList();
+    final leasableUnits = list.where((e) => !e.isVendido && !parentIds.contains(e.id)).toList();
 
     double totalArea = 0.0;
     double areaRentada = 0.0;
+    double areaVendida = 0.0;
 
     for (final item in list) {
+      if (item.isVendido) {
+        vend++;
+        areaVendida += (item.metraje ?? 0.0);
+        continue;
+      }
+
       final isDispon = item.isDisponible;
       final isRent = item.isRentado;
       final isMant = item.isMantenimiento;
@@ -258,13 +279,13 @@ class DashboardProvider extends ChangeNotifier {
 
       // Jerarquía
       if (item.isSubunidad) {
-        if (isInac) {
+        if (isInac || isMant) {
           sInac++;
         } else {
           sAct++;
         }
       } else {
-        if (isInac) {
+        if (isInac || isMant) {
           pInac++;
         } else {
           pAct++;
@@ -293,7 +314,7 @@ class DashboardProvider extends ChangeNotifier {
     final double areaVacante = (totalArea >= areaRentada) ? (totalArea - areaRentada) : 0.0;
     final double tasaM2 = totalArea > 0
         ? (areaRentada / totalArea) * 100
-        : (list.isNotEmpty ? (rent / list.length) * 100 : 0.0);
+        : (rent + disp > 0 ? (rent / (rent + disp)) * 100 : 0.0);
     final double rentaPromM2 = areaRentada > 0 ? (mrr / areaRentada) : 0.0;
     final double rentaPotencial = rentaPromM2 * totalArea;
 
@@ -321,7 +342,7 @@ class DashboardProvider extends ChangeNotifier {
       );
     }).toList();
 
-    final total = list.length;
+    final totalActivas = disp + rent + mant + inac;
 
     final distList = DashboardKpiModel.labelsTipos.map((tipo) {
       final counts = mapTipos[tipo] ?? [0, 0];
@@ -334,11 +355,14 @@ class DashboardProvider extends ChangeNotifier {
 
     return DashboardKpiModel(
       inmuebles: InmueblesDesglose(
-        total: total,
+        total: totalActivas,
         disponibles: disp,
         rentados: rent,
         mantenimiento: mant,
         inactivo: inac,
+        vendidos: vend,
+        areaTotal: totalArea,
+        areaVendida: areaVendida,
       ),
       jerarquia: JerarquiaDesglose(
         princActivas: pAct,

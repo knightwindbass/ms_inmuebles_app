@@ -10,6 +10,8 @@ import 'package:ms_inmuebles_app/data/models/tenant_perfil_model.dart';
 import 'package:ms_inmuebles_app/data/models/inmueble_model.dart';
 import 'package:ms_inmuebles_app/data/models/deuda_inmobiliaria_model.dart';
 import 'package:ms_inmuebles_app/data/repositories/inmuebles_repository.dart';
+import 'package:ms_inmuebles_app/data/repositories/dashboard_repository.dart';
+import 'package:ms_inmuebles_app/logic/dashboard_provider.dart';
 import 'package:ms_inmuebles_app/logic/inmuebles_provider.dart';
 import 'package:ms_inmuebles_app/presentation/screens/setup/qr_scanner_screen.dart';
 
@@ -1227,7 +1229,58 @@ void main() {
       expect(provider.totalOtrosEstados, equals(1)); // solo mantenimiento, no incluye vendidos
       expect(provider.totalVendidos, equals(2)); // las 2 bodegas vendidas
     });
+
+    test('DashboardProvider preserva tasa de ocupación exacta y excluye activos vendidos del área total leasable', () async {
+      final baseKpis = DashboardKpiModel.fromJson({
+        "tasa_ocupacion": 99.11,
+        "ingresos_mensuales_proyectados": 733215.0,
+        "inmuebles": {
+          "total": 76,
+          "rentado": 72,
+          "disponible": 4,
+          "vendidos": 35,
+          "area_total": 152364.0,
+          "area_rentada": 151008.0,
+        }
+      });
+
+      final mockInmuebles = [
+        InmuebleModel(id: 1, nombre: 'Nave Rentada', tipo: 'Bodega', valorRentaBase: 733215, metraje: 151008, estado: 'rentado'),
+        InmuebleModel(id: 2, nombre: 'Bodega Disponible', tipo: 'Bodega', valorRentaBase: 5000, metraje: 1356, estado: 'disponible'),
+        InmuebleModel(id: 3, nombre: 'Bodega Vendida M1', tipo: 'Bodega', valorRentaBase: 0, metraje: 14439, estado: 'vendido'),
+      ];
+
+      final provider = DashboardProvider(
+        _FakeDashboardRepository(baseKpis),
+        _FakeInmueblesRepository(mockInmuebles),
+      );
+
+      await provider.fetchDashboard();
+
+      expect(provider.kpis?.displayTasaOcupacion, equals(99.11));
+      expect(provider.kpis?.displayAreaOcupada, equals(151008.0));
+      expect(provider.kpis?.displayAreaTotal, equals(152364.0));
+    });
   });
+}
+
+class _FakeDashboardRepository implements DashboardRepository {
+  final DashboardKpiModel mockKpis;
+  _FakeDashboardRepository(this.mockKpis);
+
+  @override
+  Future<DashboardKpiModel> getResumen({int? padreId, String? excludeTipo, String? tipo}) async {
+    return mockKpis;
+  }
+
+  @override
+  Future<TenantPerfilModel?> getTenantPerfil() async => null;
+
+  @override
+  Future<ParetoResumenModel?> getParetoRenta() async => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _FakeInmueblesRepository implements InmueblesRepository {
